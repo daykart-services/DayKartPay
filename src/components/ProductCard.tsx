@@ -1,7 +1,7 @@
 import React from 'react'
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import { Heart, ShoppingCart } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
+import { Heart, ShoppingCart, ShoppingBag } from 'lucide-react'
 import type { Product } from '../types'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
@@ -18,6 +18,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   className = '' 
 }) => {
   const { user } = useAuth()
+  const navigate = useNavigate()
 
   const addToCart = async (e: React.MouseEvent) => {
     e.preventDefault()
@@ -89,30 +90,36 @@ const ProductCard: React.FC<ProductCardProps> = ({
     }
   }
 
+  const buyNow = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    navigate(`/product/${product.id}`)
+  }
+
   return (
-    <div className={`group relative bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-shadow ${className}`}>
+    <div className={`group relative bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 ${className}`}>
       <Link to={`/product/${product.id}`}>
         <div className="relative">
           <img
             src={product.image_url}
             alt={product.title}
-            className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
+            className="w-full h-64 object-cover object-center group-hover:scale-105 transition-transform duration-300"
           />
           {showActions && (
             <div className="absolute top-4 right-4 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
-              <button
-                onClick={addToWishlist}
-                className="p-2 bg-white rounded-full shadow-md hover:bg-gray-50 transition-colors"
-                title="Add to Wishlist"
-              >
-                <Heart size={20} className="text-gray-600" />
-              </button>
               <button
                 onClick={addToCart}
                 className="p-2 bg-white rounded-full shadow-md hover:bg-gray-50 transition-colors"
                 title="Add to Cart"
               >
                 <ShoppingCart size={20} className="text-gray-600" />
+              </button>
+              <button
+                onClick={buyNow}
+                className="p-2 bg-black text-white rounded-full shadow-md hover:bg-gray-800 transition-colors"
+                title="Buy Now"
+              >
+                <ShoppingBag size={20} />
               </button>
             </div>
           )}
@@ -129,9 +136,12 @@ const ProductCard: React.FC<ProductCardProps> = ({
             <span className="text-2xl font-bold text-gray-900">
               ₹{product.price}
             </span>
-            <span className="text-blue-600 hover:text-blue-700 font-medium text-sm">
-              View Details
-            </span>
+            <button
+              onClick={buyNow}
+              className="px-4 py-2 bg-black text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors"
+            >
+              Buy Now
+            </button>
           </div>
         </div>
       </Link>

@@ -1,22 +1,36 @@
 import React, { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Heart, ShoppingCart, ArrowLeft } from 'lucide-react'
-import { supabase, Product } from '../lib/supabase'
+import { Heart, ShoppingCart, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react'
+import { supabase, Product, type Product as ProductType } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
+import { usePayment } from '../hooks/usePayment'
+import EnhancedQRGenerator from '../components/EnhancedQRGenerator'
 import Footer from '../components/Footer'
 
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const [product, setProduct] = useState<Product | null>(null)
+  const [relatedProducts, setRelatedProducts] = useState<ProductType[]>([])
+  const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [loading, setLoading] = useState(true)
   const [addingToCart, setAddingToCart] = useState(false)
   const [addingToWishlist, setAddingToWishlist] = useState(false)
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
   const { user } = useAuth()
+  const { processPayment, processing } = usePayment()
   const navigate = useNavigate()
+
+  // Mock multiple images for demonstration
+  const productImages = product ? [
+    product.image_url,
+    product.image_url, // In real app, these would be different images
+    product.image_url,
+  ] : []
 
   useEffect(() => {
     if (id) {
       fetchProduct()
+      fetchRelatedProducts()
     }
   }, [id])
 
@@ -39,6 +53,30 @@ const ProductDetail: React.FC = () => {
       setLoading(false)
     }
   }
+
+  const fetchRelatedProducts = async () => {
+    if (!product) return
+
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('category', product.category)
+        .neq('id', product.id)
+        .limit(4)
+
+      if (error) throw error
+      setRelatedProducts(data || [])
+    } catch (error) {
+      console.error('Error fetching related products:', error)
+    }
+  }
+
+  useEffect(() => {
+    if (product) {
+      fetchRelatedProducts()
+    }
+  }, [product])
 
   const addToCart = async () => {
     if (!user) {
@@ -116,6 +154,55 @@ const ProductDetail: React.FC = () => {
     }
   }
 
+  const buyNow = async () => {
+    if (!user) {
+      alert('Please login to make a purchase')
+      navigate('/auth')
+      return
+    }
+
+    if (!product) return
+
+    setShowPaymentModal(true)
+  }
+
+  const handlePaymentSuccess = async () => {
+    if (!product || !user) return
+
+    try {
+      const paymentData = {
+        amount: product.price,
+        items: [{
+          id: product.id,
+          title: product.title,
+          price: product.price,
+          quantity: 1
+        }],
+        paymentMethod: 'phonepe' as const
+      }
+
+      const result = await processPayment(paymentData)
+      
+      if (result.success) {
+        alert('Payment successful! Your order has been placed.')
+        navigate('/dashboard?tab=orders')
+      } else {
+        alert(`Payment failed: ${result.error}`)
+      }
+    } catch (error) {
+      console.error('Purchase error:', error)
+      alert('An error occurred during purchase. Please try again.')
+    }
+  }
+
+  const nextImage = () => {
+    setCurrentImageIndex((prev) => (prev + 1) % productImages.length)
+  }
+
+  const prevImage = () => {
+    setCurrentImageIndex((prev) => (prev - 1 + productImages.length) % productImages.length)
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -160,11 +247,53 @@ const ProductDetail: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             {/* Product Image */}
             <div className="relative">
-              <img
-                src={product.image_url}
-                alt={product.title}
-                className="w-full h-96 lg:h-[500px] object-cover rounded-lg shadow-lg"
-              />
+              {/* Main Image */}
+              <div className="relative mb-4">
+                <img
+                  src={productImages[currentImageIndex]}
+                  alt={product.title}
+                  className="w-full h-96 lg:h-[500px] object-cover object-center rounded-lg shadow-lg"
+                />
+                
+                {/* Image Navigation */}
+                {productImages.length > 1 && (
+                  <>
+                    <button
+                      onClick={prevImage}
+                      className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-80 hover:bg-opacity-100 rounded-full p-2 shadow-md transition-all"
+                    >
+                      <ChevronLeft size={20} />
+                    </button>
+                    <button
+                      onClick={nextImage}
+                      className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-80 hover:bg-opacity-100 rounded-full p-2 shadow-md transition-all"
+                    >
+                      <ChevronRight size={20} />
+                    </button>
+                  </>
+                )}
+              </div>
+              
+              {/* Thumbnail Navigation */}
+              {productImages.length > 1 && (
+                <div className="flex space-x-2 justify-center">
+                  {productImages.map((image, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setCurrentImageIndex(index)}
+                      className={`w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${
+                        currentImageIndex === index ? 'border-black' : 'border-gray-200'
+                      }`}
+                    >
+                      <img
+                        src={image}
+                        alt={`${product.title} ${index + 1}`}
+                        className="w-full h-full object-cover object-center"
+                      />
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Product Information */}
@@ -189,23 +318,23 @@ const ProductDetail: React.FC = () => {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex flex-col sm:flex-row gap-4 mb-8">
                 <button
-                  onClick={addToCart}
-                  disabled={addingToCart}
+                  onClick={buyNow}
+                  disabled={processing}
                   className="flex-1 flex items-center justify-center space-x-2 px-8 py-3 bg-black text-white font-medium rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50"
                 >
                   <ShoppingCart size={20} />
-                  <span>{addingToCart ? 'Adding...' : 'Add to Cart'}</span>
+                  <span>{processing ? 'Processing...' : 'Buy Now'}</span>
                 </button>
                 
                 <button
-                  onClick={addToWishlist}
-                  disabled={addingToWishlist}
-                  className="flex-1 flex items-center justify-center space-x-2 px-8 py-3 border-2 border-gray-300 text-gray-700 font-medium rounded-lg hover:border-gray-400 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                  onClick={addToCart}
+                  disabled={addingToCart}
+                  className="flex-1 flex items-center justify-center space-x-2 px-8 py-3 border-2 border-black text-black font-medium rounded-lg hover:bg-black hover:text-white transition-colors disabled:opacity-50"
                 >
-                  <Heart size={20} />
-                  <span>{addingToWishlist ? 'Adding...' : 'Add to Wishlist'}</span>
+                  <ShoppingCart size={20} />
+                  <span>{addingToCart ? 'Adding...' : 'Add to Cart'}</span>
                 </button>
               </div>
 
@@ -235,6 +364,48 @@ const ProductDetail: React.FC = () => {
           </div>
         </div>
       </section>
+
+      {/* You May Also Like Section */}
+      {relatedProducts.length > 0 && (
+        <section className="py-16 bg-gray-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">You May Also Like</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {relatedProducts.map((relatedProduct) => (
+                <div key={relatedProduct.id} className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-shadow">
+                  <Link to={`/product/${relatedProduct.id}`}>
+                    <img
+                      src={relatedProduct.image_url}
+                      alt={relatedProduct.title}
+                      className="w-full h-48 object-cover object-center hover:scale-105 transition-transform duration-300"
+                    />
+                    <div className="p-4">
+                      <h3 className="font-medium text-gray-900 mb-2 line-clamp-2">
+                        {relatedProduct.title}
+                      </h3>
+                      <p className="text-xl font-bold text-gray-900">
+                        ₹{relatedProduct.price}
+                      </p>
+                    </div>
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Payment Modal */}
+      {showPaymentModal && product && (
+        <EnhancedQRGenerator
+          amount={product.price}
+          onClose={() => setShowPaymentModal(false)}
+          onPaymentSuccess={handlePaymentSuccess}
+          merchantName="DAYKART"
+          merchantUPI="merchant@phonepe"
+          merchantId="DAYKART001"
+        />
+      )}
 
       <Footer />
     </div>

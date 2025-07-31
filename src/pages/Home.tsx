@@ -10,9 +10,7 @@ const Home: React.FC = () => {
       <section className="bg-white py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-           <div className="ml-28">
-            <div className="flex justify-end">
-              <div className="ml-20">
+            <div className="text-center lg:text-left">
                 <p className="text-sm text-gray-600 mb-4">New in</p>
                 <h1 className="text-5xl font-bold text-gray-900 mb-4">
                   PREMIUM<br />
@@ -27,16 +25,14 @@ const Home: React.FC = () => {
                 >
                   Explore Now
                 </Link>
-              </div>
-            </div>
             </div>
             
-            <div className="relative">
-              <div className="w-80 h-80 bg-black full mx-auto relative overflow-hidden">
+            <div className="relative flex justify-center">
+              <div className="w-80 h-80 bg-black mx-auto relative overflow-hidden rounded-lg">
                 <img
                   src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQo7f_bvzfHRsX6r0pqYkgJVNrY76_2qYe1N2jKQ2HBtV_kjK6CFW2mqoo&s"
                   alt="Premium Mattress"
-                  className="relative z-10 w-[360px] object-contain"
+                  className="relative z-10 w-full h-full object-cover object-center"
                 />
               </div>
               
@@ -46,7 +42,6 @@ const Home: React.FC = () => {
                   <div className="w-8 h-8 border-2 border-gray-300 rounded-full flex items-center justify-center mx-auto mb-2">
                     <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
                   </div>
-                  <p className="text-sm text-gray-600"></p>
                 </div>
               </div>
             </div>

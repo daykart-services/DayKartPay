@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { ShoppingCart, Heart, Package } from 'lucide-react'
+import { ShoppingCart, Heart, Package, User } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase, CartItem, WishlistItem, Order } from '../lib/supabase'
 import { usePayment } from '../hooks/usePayment'
@@ -8,10 +8,17 @@ import EnhancedQRGenerator from '../components/EnhancedQRGenerator'
 import Footer from '../components/Footer'
 
 const Dashboard: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'cart' | 'liked' | 'orders'>('cart')
+  const [activeTab, setActiveTab] = useState<'profile' | 'cart' | 'liked' | 'orders'>('profile')
   const [cartItems, setCartItems] = useState<CartItem[]>([])
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([])
   const [orders, setOrders] = useState<Order[]>([])
+  const [profile, setProfile] = useState({
+    fullName: '',
+    email: '',
+    phone: '',
+    address: ''
+  })
+  const [editingProfile, setEditingProfile] = useState(false)
   const [loading, setLoading] = useState(true)
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [paymentAmount, setPaymentAmount] = useState(0)
@@ -54,9 +61,25 @@ const Dashboard: React.FC = () => {
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
 
+      // Fetch user profile
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single()
+
       setCartItems(cartData || [])
       setWishlistItems(wishlistData || [])
       setOrders(ordersData || [])
+      
+      if (profileData) {
+        setProfile({
+          fullName: profileData.full_name || '',
+          email: profileData.email || user.email || '',
+          phone: profileData.phone || '',
+          address: profileData.address || ''
+        })
+      }
     } catch (error) {
       console.error('Error fetching user data:', error)
     } finally {
@@ -103,6 +126,28 @@ const Dashboard: React.FC = () => {
     } catch (error) {
       console.error('Error removing from wishlist:', error)
       alert('Unable to remove item from wishlist. Please try again.')
+    }
+  }
+
+  const updateProfile = async () => {
+    if (!user) return
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          full_name: profile.fullName,
+          phone: profile.phone,
+          address: profile.address
+        })
+        .eq('id', user.id)
+
+      if (error) throw error
+      setEditingProfile(false)
+      alert('Profile updated successfully!')
+    } catch (error) {
+      console.error('Error updating profile:', error)
+      alert('Failed to update profile. Please try again.')
     }
   }
 
@@ -172,6 +217,18 @@ const Dashboard: React.FC = () => {
         {/* Tab Navigation */}
         <div className="flex justify-center space-x-8 mb-8">
           <button
+            onClick={() => setActiveTab('profile')}
+            className={`flex items-center space-x-2 pb-2 border-b-2 ${
+              activeTab === 'profile' 
+                ? 'border-black text-black' 
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <User size={20} />
+            <span className="font-medium">Profile</span>
+          </button>
+          
+          <button
             onClick={() => setActiveTab('cart')}
             className={`flex items-center space-x-2 pb-2 border-b-2 ${
               activeTab === 'cart' 
@@ -210,6 +267,100 @@ const Dashboard: React.FC = () => {
 
         {/* Tab Content */}
         <div className="bg-white rounded-lg shadow-sm min-h-96">
+          {activeTab === 'profile' && (
+            <div className="p-8">
+              <div className="max-w-2xl mx-auto">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900">Profile Details</h2>
+                  <button
+                    onClick={() => editingProfile ? updateProfile() : setEditingProfile(true)}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    {editingProfile ? 'Save Changes' : 'Edit Profile'}
+                  </button>
+                </div>
+
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Full Name
+                    </label>
+                    {editingProfile ? (
+                      <input
+                        type="text"
+                        value={profile.fullName}
+                        onChange={(e) => setProfile({ ...profile, fullName: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Enter your full name"
+                      />
+                    ) : (
+                      <p className="text-gray-900 py-2">{profile.fullName || 'Not provided'}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Email Address
+                    </label>
+                    <p className="text-gray-900 py-2">{profile.email}</p>
+                    <p className="text-sm text-gray-500">Email cannot be changed</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Phone Number
+                    </label>
+                    {editingProfile ? (
+                      <input
+                        type="tel"
+                        value={profile.phone}
+                        onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Enter your phone number"
+                      />
+                    ) : (
+                      <p className="text-gray-900 py-2">{profile.phone || 'Not provided'}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Complete Address
+                    </label>
+                    {editingProfile ? (
+                      <textarea
+                        value={profile.address}
+                        onChange={(e) => setProfile({ ...profile, address: e.target.value })}
+                        rows={3}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Enter your complete address"
+                      />
+                    ) : (
+                      <p className="text-gray-900 py-2">{profile.address || 'Not provided'}</p>
+                    )}
+                  </div>
+
+                  {editingProfile && (
+                    <div className="flex space-x-4">
+                      <button
+                        onClick={updateProfile}
+                        className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                      >
+                        Save Changes
+                      </button>
+                      <button
+                        onClick={() => setEditingProfile(false)}
+                        className="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           {activeTab === 'cart' && (
             <div className="p-8">
               {cartItems.length > 0 ? (
@@ -304,19 +455,57 @@ const Dashboard: React.FC = () => {
           {activeTab === 'orders' && (
             <div className="p-8">
               {orders.length > 0 ? (
-                <div className="space-y-4">
+                <div className="space-y-6">
                   {orders.map((order) => (
-                    <div key={order.id} className="border border-gray-200 rounded-lg p-4">
-                      <div className="flex justify-between items-start">
+                    <div key={order.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+                      <div className="flex justify-between items-start mb-4">
                         <div>
-                          <h3 className="font-medium">Order #{order.id.slice(0, 8)}</h3>
-                          <p className="text-gray-600">Status: {order.status}</p>
-                          <p className="text-gray-600">Date: {new Date(order.created_at).toLocaleDateString()}</p>
+                          <h3 className="text-lg font-semibold text-gray-900">Order #{order.id.slice(0, 8)}</h3>
+                          <p className="text-gray-600 mt-1">
+                            <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
+                              order.status === 'completed' ? 'bg-green-100 text-green-800' :
+                              order.status === 'processing' ? 'bg-blue-100 text-blue-800' :
+                              order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-gray-100 text-gray-800'
+                            }`}>
+                              {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                            </span>
+                          </p>
+                          <p className="text-gray-600 mt-2">
+                            Ordered on {new Date(order.created_at).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric'
+                            })}
+                          </p>
                         </div>
                         <div className="text-right">
-                          <p className="text-lg font-semibold">₹{order.total_amount}</p>
+                          <p className="text-2xl font-bold text-gray-900">₹{order.total_amount}</p>
+                          <p className="text-sm text-gray-500">Total Amount</p>
                         </div>
                       </div>
+                      
+                      {/* Order Items */}
+                      {order.products && order.products.length > 0 && (
+                        <div className="border-t pt-4">
+                          <h4 className="font-medium text-gray-900 mb-3">Items ({order.products.length})</h4>
+                          <div className="space-y-2">
+                            {order.products.slice(0, 3).map((item: any, index: number) => (
+                              <div key={index} className="flex justify-between items-center text-sm">
+                                <span className="text-gray-700">{item.title || `Item ${index + 1}`}</span>
+                                <span className="text-gray-600">
+                                  {item.quantity ? `${item.quantity}x ` : ''}₹{item.price || 0}
+                                </span>
+                              </div>
+                            ))}
+                            {order.products.length > 3 && (
+                              <p className="text-sm text-gray-500">
+                                +{order.products.length - 3} more items
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -325,6 +514,12 @@ const Dashboard: React.FC = () => {
                   <Package size={64} className="mx-auto text-gray-400 mb-4" />
                   <h3 className="text-xl font-medium text-gray-900 mb-2">No orders yet</h3>
                   <p className="text-gray-600">Your order history will appear here!</p>
+                  <Link
+                    to="/products"
+                    className="inline-block mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    Start Shopping
+                  </Link>
                 </div>
               )}
             </div>

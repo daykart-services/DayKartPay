@@ -1,12 +1,14 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ShoppingCart, User, ChevronDown } from 'lucide-react'
+import { ShoppingCart, User, ChevronDown, Badge } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
+import { useCart } from '../hooks/useCart'
 
 const Header: React.FC = () => {
   const [showMenu, setShowMenu] = useState(false)
   const [showUserDropdown, setShowUserDropdown] = useState(false)
   const { user, isAdmin, signOut, adminLogout } = useAuth()
+  const { cartItemsCount } = useCart()
   const navigate = useNavigate()
 
   const categories = [
@@ -36,7 +38,7 @@ const Header: React.FC = () => {
   }
 
   return (
-    <header className="bg-white border-b border-gray-200">
+    <header className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
@@ -54,8 +56,13 @@ const Header: React.FC = () => {
 
           {/* Right side - Cart and User */}
           <div className="flex items-center space-x-4">
-            <Link to="/cart" className="text-gray-700 hover:text-gray-900">
+            <Link to="/cart" className="relative text-gray-700 hover:text-gray-900">
               <ShoppingCart size={24} />
+              {cartItemsCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
+                  {cartItemsCount > 99 ? '99+' : cartItemsCount}
+                </span>
+              )}
             </Link>
 
             {user || isAdmin ? (
@@ -122,7 +129,7 @@ const Header: React.FC = () => {
 
         {/* Category Menu */}
         {showMenu && (
-          <div className="border-t border-gray-200 py-4">
+          <div className="border-t border-gray-200 py-4 bg-white">
             <nav className="flex justify-center space-x-8">
               {categories.map((category) => (
                 <Link

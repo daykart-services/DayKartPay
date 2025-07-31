@@ -16,6 +16,7 @@ const AdminDashboard: React.FC = () => {
     title: '',
     image_url: '',
     price: '',
+    stock_quantity: '',
     description: '',
     category: 'beds',
     is_featured: false
@@ -59,6 +60,7 @@ const AdminDashboard: React.FC = () => {
         title: productForm.title,
         image_url: productForm.image_url,
         price: parseFloat(productForm.price),
+        stock_quantity: parseInt(productForm.stock_quantity) || 0,
         description: productForm.description,
         category: productForm.category,
         is_featured: productForm.is_featured
@@ -83,6 +85,7 @@ const AdminDashboard: React.FC = () => {
         title: '', 
         image_url: '', 
         price: '', 
+        stock_quantity: '',
         description: '', 
         category: 'beds',
         is_featured: false 
@@ -136,6 +139,7 @@ const AdminDashboard: React.FC = () => {
       title: product.title,
       image_url: product.image_url,
       price: product.price.toString(),
+      stock_quantity: (product as any).stock_quantity?.toString() || '0',
       description: product.description,
       category: product.category,
       is_featured: product.is_featured
@@ -208,6 +212,7 @@ const AdminDashboard: React.FC = () => {
                       title: '', 
                       image_url: '', 
                       price: '', 
+                     stock_quantity: '',
                       description: '', 
                       category: 'beds',
                       is_featured: false 
@@ -256,6 +261,19 @@ const AdminDashboard: React.FC = () => {
                           value={productForm.price}
                           onChange={(e) => setProductForm({ ...productForm, price: e.target.value })}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Stock Quantity</label>
+                        <input
+                          type="number"
+                          min="0"
+                          max="9999"
+                          value={productForm.stock_quantity}
+                          onChange={(e) => setProductForm({ ...productForm, stock_quantity: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                          placeholder="0"
                           required
                         />
                       </div>
@@ -338,6 +356,9 @@ const AdminDashboard: React.FC = () => {
                       <p className="text-gray-600 text-sm mb-2 line-clamp-2">{product.description}</p>
                       <p className="text-lg font-semibold mb-2">₹{product.price}</p>
                       <p className="text-sm text-gray-500 mb-4 capitalize">{product.category}</p>
+                      <p className="text-sm text-gray-600 mb-4">
+                        Stock: {(product as any).stock_quantity || 0} units
+                      </p>
                       <div className="flex space-x-2">
                         <button
                           onClick={() => startEdit(product)}
