@@ -62,12 +62,40 @@ export const useCart = () => {
     }
   }, [user, fetchCartCount])
 
+  // Show success notification
+  const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
+    const notification = document.createElement('div')
+    notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 transition-all transform translate-x-0 ${
+      type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+    }`
+    notification.textContent = message
+    document.body.appendChild(notification)
+    
+    // Animate in
+    setTimeout(() => {
+      notification.style.transform = 'translateX(0)'
+    }, 10)
+    
+    // Remove after 3 seconds
+    setTimeout(() => {
+      notification.style.transform = 'translateX(100%)'
+      setTimeout(() => {
+        if (notification.parentNode) {
+          notification.parentNode.removeChild(notification)
+        }
+      }, 300)
+    }, 3000)
+  }
+
   const addToCart = useCallback(async (productId: string, quantity: number = 1) => {
     if (!user) {
       throw new Error('User not authenticated')
     }
 
     try {
+      // Optimistic update - immediately update UI
+      setCartItemsCount(prev => prev + 1)
+      
       const { error } = await supabase
         .from('cart_items')
         .insert([
@@ -84,16 +112,22 @@ export const useCart = () => {
             .eq('product_id', productId)
 
           if (updateError) throw updateError
+          showNotification('Item quantity updated in cart!')
         } else {
           throw error
         }
+      } else {
+        showNotification('Added to cart!')
       }
 
-      // Immediately update count
+      // Fetch actual count to ensure accuracy
       await fetchCartCount()
       return { success: true }
     } catch (error) {
+      // Revert optimistic update on error
+      setCartItemsCount(prev => Math.max(0, prev - 1))
       console.error('Error adding to cart:', error)
+      showNotification('Failed to add to cart', 'error')
       return { success: false, error: error instanceof Error ? error.message : 'Failed to add to cart' }
     }
   }, [user, fetchCartCount])
@@ -104,6 +138,9 @@ export const useCart = () => {
     }
 
     try {
+      // Optimistic update
+      setCartItemsCount(prev => Math.max(0, prev - 1))
+      
       const { error } = await supabase
         .from('cart_items')
         .delete()
@@ -112,11 +149,15 @@ export const useCart = () => {
 
       if (error) throw error
 
-      // Immediately update count
+      showNotification('Removed from cart!')
+      // Fetch actual count to ensure accuracy
       await fetchCartCount()
       return { success: true }
     } catch (error) {
+      // Revert optimistic update on error
+      setCartItemsCount(prev => prev + 1)
       console.error('Error removing from cart:', error)
+      showNotification('Failed to remove from cart', 'error')
       return { success: false, error: error instanceof Error ? error.message : 'Failed to remove from cart' }
     }
   }, [user, fetchCartCount])
@@ -135,11 +176,13 @@ export const useCart = () => {
 
       if (error) throw error
 
+      showNotification('Cart updated!')
       // Immediately update count
       await fetchCartCount()
       return { success: true }
     } catch (error) {
       console.error('Error updating cart quantity:', error)
+      showNotification('Failed to update cart', 'error')
       return { success: false, error: error instanceof Error ? error.message : 'Failed to update quantity' }
     }
   }, [user, fetchCartCount])
@@ -159,9 +202,11 @@ export const useCart = () => {
 
       // Immediately update count
       setCartItemsCount(0)
+      showNotification('Cart cleared!')
       return { success: true }
     } catch (error) {
       console.error('Error clearing cart:', error)
+      showNotification('Failed to clear cart', 'error')
       return { success: false, error: error instanceof Error ? error.message : 'Failed to clear cart' }
     }
   }, [user])

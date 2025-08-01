@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Copy, Users, Gift, TrendingUp, Share2, Check } from 'lucide-react'
+import { Copy, Users, Gift, TrendingUp, Share2, Check, ExternalLink } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 
@@ -223,7 +223,7 @@ const ReferralSystem: React.FC = () => {
             onClick={copyReferralLink}
             className="flex items-center justify-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
-            <Copy size={16} />
+            <ExternalLink size={16} />
             <span>Copy Link</span>
           </button>
           

@@ -35,19 +35,10 @@ const ProductCard: React.FC<ProductCardProps> = ({
     setIsAddingToCart(true)
     try {
       const result = await addToCart(product.id, 1)
-      if (result.success) {
-        // Show success notification
-        const notification = document.createElement('div')
-        notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 transition-all'
-        notification.textContent = 'Added to cart!'
-        document.body.appendChild(notification)
-        
-        setTimeout(() => {
-          notification.remove()
-        }, 2000)
-      } else {
+      if (!result.success) {
         alert(result.error || 'Failed to add item to cart')
       }
+      // Success notification is now handled in useCart hook
     } catch (error) {
       console.error('Error adding to cart:', error)
       alert('Unable to add item to cart. Please try again.')
