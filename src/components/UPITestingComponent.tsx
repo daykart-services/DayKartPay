@@ -8,7 +8,7 @@ import { generateUPIString, validateUPIData, formatAmount } from '../utils/upiGe
 const UPITestingComponent: React.FC = () => {
   const [testAmount, setTestAmount] = useState(25)
   const [merchantName, setMerchantName] = useState('DAYKART')
-  const [merchantUPI, setMerchantUPI] = useState('merchant@phonepe')
+  const [merchantUPI, setMerchantUPI] = useState('9652377187-2@ybl')
   const [generatedUPI, setGeneratedUPI] = useState('')
   const [validationResult, setValidationResult] = useState<any>(null)
 
