@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { ShoppingCart, Heart, Package, User } from 'lucide-react'
+import { ShoppingCart, Heart, Package, User, Gift } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase, CartItem, WishlistItem, Order } from '../lib/supabase'
 import { usePayment } from '../hooks/usePayment'
+import { useCart } from '../hooks/useCart'
 import EnhancedQRGenerator from '../components/EnhancedQRGenerator'
-import Footer from '../components/Footer'
+import ReferralSystem from '../components/ReferralSystem'
 
 const Dashboard: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'profile' | 'cart' | 'liked' | 'orders'>('profile')
+  const [activeTab, setActiveTab] = useState<'profile' | 'cart' | 'liked' | 'orders' | 'referrals'>('profile')
   const [cartItems, setCartItems] = useState<CartItem[]>([])
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([])
   const [orders, setOrders] = useState<Order[]>([])
@@ -24,6 +25,7 @@ const Dashboard: React.FC = () => {
   const [paymentAmount, setPaymentAmount] = useState(0)
   const { user } = useAuth()
   const { processPayment, processing } = usePayment()
+  const { removeFromCart: removeCartItem } = useCart()
 
   useEffect(() => {
     if (user) {
@@ -88,20 +90,13 @@ const Dashboard: React.FC = () => {
   }
 
   const removeFromCart = async (itemId: string) => {
-    if (!user) {
-      alert('Please login to manage your cart')
-      return
-    }
-
     try {
-      const { error } = await supabase
-        .from('cart_items')
-        .delete()
-        .eq('id', itemId)
-        .eq('user_id', user.id) // Additional security check
-
-      if (error) throw error
-      fetchUserData()
+      const result = await removeCartItem(itemId)
+      if (result.success) {
+        fetchUserData()
+      } else {
+        alert(result.error || 'Failed to remove item from cart')
+      }
     } catch (error) {
       console.error('Error removing from cart:', error)
       alert('Unable to remove item from cart. Please try again.')
@@ -263,6 +258,18 @@ const Dashboard: React.FC = () => {
             <Package size={20} />
             <span className="font-medium">Orders</span>
           </button>
+          
+          <button
+            onClick={() => setActiveTab('referrals')}
+            className={`flex items-center space-x-2 pb-2 border-b-2 ${
+              activeTab === 'referrals' 
+                ? 'border-black text-black' 
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <Gift size={20} />
+            <span className="font-medium">Referrals</span>
+          </button>
         </div>
 
         {/* Tab Content */}
@@ -399,10 +406,6 @@ const Dashboard: React.FC = () => {
                       </button>
                     </div>
                   </div>
-                  {/* Add Footer to Cart Section */}
-                  <div className="mt-12">
-                    <Footer />
-                  </div>
                 </div>
               ) : (
                 <div>
@@ -410,10 +413,6 @@ const Dashboard: React.FC = () => {
                     <ShoppingCart size={64} className="mx-auto text-gray-400 mb-4" />
                     <h3 className="text-xl font-medium text-gray-900 mb-2">Your cart is empty</h3>
                     <p className="text-gray-600">Start shopping and add items to your cart!</p>
-                  </div>
-                  {/* Add Footer to Empty Cart */}
-                  <div className="mt-12">
-                    <Footer />
                   </div>
                 </div>
               )}
@@ -522,6 +521,12 @@ const Dashboard: React.FC = () => {
                   </Link>
                 </div>
               )}
+            </div>
+          )}
+
+          {activeTab === 'referrals' && (
+            <div className="p-8">
+              <ReferralSystem />
             </div>
           )}
         </div>
