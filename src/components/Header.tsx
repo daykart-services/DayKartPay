@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ShoppingCart, User, ChevronDown, Menu, X } from 'lucide-react'
+import { ShoppingCart, User, ChevronDown, Menu } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useCart } from '../hooks/useCart'
 
@@ -37,98 +37,53 @@ const Header: React.FC = () => {
     setShowUserDropdown(false)
   }
 
-  // Close dropdowns when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement
-      if (!target.closest('.dropdown-container')) {
-        setShowUserDropdown(false)
-      }
-      if (!target.closest('.menu-container')) {
-        setShowMenu(false)
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
-
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link to="/" className="text-2xl font-bold text-gray-900 hover:text-gray-700 transition-colors">
+          <Link to="/" className="text-2xl font-bold text-gray-900">
             DAYKART
           </Link>
 
           {/* Menu Button */}
-          <div className="menu-container relative">
-            <button
-              onClick={() => setShowMenu(!showMenu)}
-              className="flex items-center space-x-1 text-gray-700 hover:text-gray-900 font-medium transition-colors"
-            >
-              <span>MENU</span>
-              {showMenu ? <X size={16} /> : <Menu size={16} />}
-            </button>
-
-            {/* Category Menu Dropdown */}
-            {showMenu && (
-              <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-                <nav className="flex flex-col">
-                  {categories.map((category) => (
-                    <Link
-                      key={category.name}
-                      to={category.path}
-                      onClick={() => setShowMenu(false)}
-                      className="px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-gray-900 font-medium text-sm tracking-wide transition-colors"
-                    >
-                      {category.name}
-                    </Link>
-                  ))}
-                </nav>
-              </div>
-            )}
-          </div>
+          <button
+            onClick={() => setShowMenu(!showMenu)}
+            className="text-gray-700 hover:text-gray-900 font-medium"
+          >
+            MENU
+          </button>
 
           {/* Right side - Cart and User */}
           <div className="flex items-center space-x-4">
-            <Link 
-              to={user ? "/dashboard" : "/auth"} 
-              className="relative text-gray-700 hover:text-gray-900 transition-colors"
-              onClick={() => user && navigate('/dashboard', { state: { activeTab: 'cart' } })}
-            >
+            <Link to="/dashboard?tab=cart" className="relative text-gray-700 hover:text-gray-900">
               <ShoppingCart size={24} />
               {cartItemsCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium animate-pulse">
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
                   {cartItemsCount > 99 ? '99+' : cartItemsCount}
                 </span>
               )}
             </Link>
 
             {user || isAdmin ? (
-              <div className="dropdown-container relative">
+              <div className="relative">
                 <button
                   onClick={() => setShowUserDropdown(!showUserDropdown)}
-                  className="flex items-center space-x-1 text-gray-700 hover:text-gray-900 transition-colors"
+                  className="flex items-center space-x-1 text-gray-700 hover:text-gray-900"
                 >
                   <User size={20} />
-                  <span className="text-sm font-medium">
-                    {isAdmin ? 'Admin' : user?.email?.split('@')[0] || 'User'}
-                  </span>
-                  <ChevronDown size={16} className={`transition-transform ${showUserDropdown ? 'rotate-180' : ''}`} />
+                  <span className="text-sm font-medium">{isAdmin ? 'admin' : user?.email?.split('@')[0]}</span>
+                  <ChevronDown size={16} />
                 </button>
 
                 {showUserDropdown && (
                   <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
                     <div className="px-4 py-2 border-b border-gray-100">
-                      <div className="font-medium text-gray-900">
-                        {isAdmin ? 'Administrator' : user?.email?.split('@')[0] || 'User'}
-                      </div>
+                      <div className="font-medium text-gray-900">{isAdmin ? 'admin' : user?.email?.split('@')[0]}</div>
                       <div className="text-sm text-gray-500">{isAdmin ? 'admin@daykart.com' : user?.email}</div>
                       {isAdmin && (
-                        <span className="inline-block px-2 py-1 text-xs bg-red-100 text-red-800 rounded mt-1">
-                          Admin Access
+                        <span className="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded mt-1">
+                          Admin
                         </span>
                       )}
                     </div>
@@ -136,9 +91,9 @@ const Header: React.FC = () => {
                     {isAdmin && (
                       <button
                         onClick={handleAdminPortal}
-                        className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors"
+                        className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50"
                       >
-                        Admin Dashboard
+                        Admin Portal
                       </button>
                     )}
                     
@@ -146,17 +101,17 @@ const Header: React.FC = () => {
                       <Link
                         to="/dashboard"
                         onClick={() => setShowUserDropdown(false)}
-                        className="block px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors"
+                        className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
                       >
-                        My Dashboard
+                        Dashboard
                       </Link>
                     )}
                     
                     <button
                       onClick={handleLogout}
-                      className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors"
+                      className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50"
                     >
-                      Sign Out
+                      Logout
                     </button>
                   </div>
                 )}
@@ -164,13 +119,31 @@ const Header: React.FC = () => {
             ) : (
               <Link
                 to="/auth"
-                className="text-gray-700 hover:text-gray-900 font-medium transition-colors"
+                className="text-gray-700 hover:text-gray-900 font-medium"
               >
-                Sign In
+                Login
               </Link>
             )}
           </div>
         </div>
+
+        {/* Category Menu */}
+        {showMenu && (
+          <div className="border-t border-gray-200 py-4 bg-white">
+            <nav className="flex justify-center space-x-8">
+              {categories.map((category) => (
+                <Link
+                  key={category.name}
+                  to={category.path}
+                  onClick={() => setShowMenu(false)}
+                  className="text-gray-700 hover:text-gray-900 font-medium text-sm tracking-wide"
+                >
+                  {category.name}
+                </Link>
+              ))}
+            </nav>
+          </div>
+        )}
       </div>
     </header>
   )

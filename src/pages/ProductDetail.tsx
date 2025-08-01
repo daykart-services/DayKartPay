@@ -1,20 +1,18 @@
 import React, { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { Heart, ShoppingCart, ArrowLeft, ChevronLeft, ChevronRight, Star, Truck, Shield, RotateCcw } from 'lucide-react'
+import { Heart, ShoppingCart, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react'
 import { supabase, Product, type Product as ProductType } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { usePayment } from '../hooks/usePayment'
 import { useCart } from '../hooks/useCart'
 import EnhancedQRGenerator from '../components/EnhancedQRGenerator'
 import Footer from '../components/Footer'
-import LoadingSpinner from '../components/LoadingSpinner'
 
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const [product, setProduct] = useState<Product | null>(null)
   const [relatedProducts, setRelatedProducts] = useState<ProductType[]>([])
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
-  const [quantity, setQuantity] = useState(1)
   const [loading, setLoading] = useState(true)
   const [addingToCart, setAddingToCart] = useState(false)
   const [addingToWishlist, setAddingToWishlist] = useState(false)
@@ -24,17 +22,17 @@ const ProductDetail: React.FC = () => {
   const { addToCart: addToCartHook } = useCart()
   const navigate = useNavigate()
 
-  // Generate multiple product images for gallery (in real app, these would come from database)
+  // Mock multiple images for demonstration
   const productImages = product ? [
     product.image_url,
-    product.image_url, // In production, these would be different images
-    product.image_url,
+    product.image_url, // In real app, these would be different images
     product.image_url,
   ] : []
 
   useEffect(() => {
     if (id) {
       fetchProduct()
+      fetchRelatedProducts()
     }
   }, [id])
 
@@ -67,7 +65,7 @@ const ProductDetail: React.FC = () => {
         .select('*')
         .eq('category', product.category)
         .neq('id', product.id)
-        .limit(6)
+        .limit(4)
 
       if (error) throw error
       setRelatedProducts(data || [])
@@ -84,6 +82,7 @@ const ProductDetail: React.FC = () => {
 
   const addToCart = async () => {
     if (!user) {
+      alert('Please login to add items to your cart')
       navigate('/auth')
       return
     }
@@ -92,9 +91,13 @@ const ProductDetail: React.FC = () => {
 
     setAddingToCart(true)
     try {
-      await addToCartHook(product.id, quantity)
+      const result = await addToCartHook(product.id, 1)
+      if (!result.success) {
+        alert(result.error || 'Failed to add item to cart')
+      }
     } catch (error) {
       console.error('Error adding to cart:', error)
+      alert('Unable to add item to cart. Please try again.')
     } finally {
       setAddingToCart(false)
     }
@@ -102,6 +105,7 @@ const ProductDetail: React.FC = () => {
 
   const addToWishlist = async () => {
     if (!user) {
+      alert('Please login to add items to your wishlist')
       navigate('/auth')
       return
     }
@@ -135,11 +139,13 @@ const ProductDetail: React.FC = () => {
 
   const buyNow = async () => {
     if (!user) {
+      alert('Please login to make a purchase')
       navigate('/auth')
       return
     }
 
     if (!product) return
+
     setShowPaymentModal(true)
   }
 
@@ -148,12 +154,12 @@ const ProductDetail: React.FC = () => {
 
     try {
       const paymentData = {
-        amount: product.price * quantity,
+        amount: product.price,
         items: [{
           id: product.id,
           title: product.title,
           price: product.price,
-          quantity: quantity
+          quantity: 1
         }],
         paymentMethod: 'phonepe' as const
       }
@@ -162,7 +168,7 @@ const ProductDetail: React.FC = () => {
       
       if (result.success) {
         alert('Payment successful! Your order has been placed.')
-        navigate('/dashboard', { state: { activeTab: 'orders' } })
+        navigate('/dashboard?tab=orders')
       } else {
         alert(`Payment failed: ${result.error}`)
       }
@@ -183,7 +189,10 @@ const ProductDetail: React.FC = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <LoadingSpinner size="lg" />
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading product...</p>
+        </div>
       </div>
     )
   }
@@ -212,17 +221,17 @@ const ProductDetail: React.FC = () => {
           {/* Back Button */}
           <button
             onClick={() => navigate(-1)}
-            className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 mb-8 transition-colors"
+            className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 mb-8"
           >
             <ArrowLeft size={20} />
             <span>Back</span>
           </button>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            {/* Product Image Gallery */}
-            <div className="space-y-4">
+            {/* Product Image */}
+            <div className="relative">
               {/* Main Image */}
-              <div className="relative">
+              <div className="relative mb-4">
                 <img
                   src={productImages[currentImageIndex]}
                   alt={product.title}
@@ -234,34 +243,29 @@ const ProductDetail: React.FC = () => {
                   <>
                     <button
                       onClick={prevImage}
-                      className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-90 hover:bg-opacity-100 rounded-full p-2 shadow-md transition-all"
+                      className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-80 hover:bg-opacity-100 rounded-full p-2 shadow-md transition-all"
                     >
                       <ChevronLeft size={20} />
                     </button>
                     <button
                       onClick={nextImage}
-                      className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-90 hover:bg-opacity-100 rounded-full p-2 shadow-md transition-all"
+                      className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-80 hover:bg-opacity-100 rounded-full p-2 shadow-md transition-all"
                     >
                       <ChevronRight size={20} />
                     </button>
                   </>
                 )}
-
-                {/* Image Counter */}
-                <div className="absolute bottom-4 right-4 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-sm">
-                  {currentImageIndex + 1} / {productImages.length}
-                </div>
               </div>
               
-              {/* Thumbnail Gallery */}
+              {/* Thumbnail Navigation */}
               {productImages.length > 1 && (
-                <div className="flex space-x-2 overflow-x-auto">
+                <div className="flex space-x-2 justify-center">
                   {productImages.map((image, index) => (
                     <button
                       key={index}
                       onClick={() => setCurrentImageIndex(index)}
-                      className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${
-                        currentImageIndex === index ? 'border-black' : 'border-gray-200 hover:border-gray-400'
+                      className={`w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${
+                        currentImageIndex === index ? 'border-black' : 'border-gray-200'
                       }`}
                     >
                       <img
@@ -276,71 +280,24 @@ const ProductDetail: React.FC = () => {
             </div>
 
             {/* Product Information */}
-            <div className="flex flex-col justify-start">
-              <div className="mb-6">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="inline-block px-3 py-1 bg-gray-100 text-gray-700 text-sm font-medium rounded-full capitalize">
-                    {product.category}
-                  </span>
-                  {product.is_featured && (
-                    <span className="inline-block px-3 py-1 bg-red-100 text-red-700 text-sm font-medium rounded-full">
-                      Featured
-                    </span>
-                  )}
-                </div>
-                
+            <div className="flex flex-col justify-center">
+              <div className="mb-4">
+                <span className="inline-block px-3 py-1 bg-gray-100 text-gray-700 text-sm font-medium rounded-full capitalize mb-4">
+                  {product.category}
+                </span>
                 <h1 className="text-4xl font-bold text-gray-900 mb-4">
                   {product.title}
                 </h1>
-                
-                {/* Rating */}
-                <div className="flex items-center mb-4">
-                  <div className="flex items-center">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="w-5 h-5 text-yellow-400 fill-current" />
-                    ))}
-                  </div>
-                  <span className="ml-2 text-gray-600">(4.8) • 124 reviews</span>
-                </div>
-                
                 <p className="text-3xl font-bold text-gray-900 mb-6">
-                  ₹{(product.price * quantity).toLocaleString()}
-                  {quantity > 1 && (
-                    <span className="text-lg text-gray-500 ml-2">
-                      (₹{product.price.toLocaleString()} each)
-                    </span>
-                  )}
+                  ₹{product.price}
                 </p>
               </div>
 
-              {/* Product Description */}
               <div className="mb-8">
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">Description</h3>
                 <p className="text-gray-700 leading-relaxed">
                   {product.description}
                 </p>
-              </div>
-
-              {/* Quantity Selector */}
-              <div className="mb-8">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Quantity
-                </label>
-                <div className="flex items-center space-x-3">
-                  <button
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 transition-colors"
-                  >
-                    -
-                  </button>
-                  <span className="w-12 text-center font-medium">{quantity}</span>
-                  <button
-                    onClick={() => setQuantity(quantity + 1)}
-                    className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 transition-colors"
-                  >
-                    +
-                  </button>
-                </div>
               </div>
 
               {/* Action Buttons */}
@@ -364,30 +321,27 @@ const ProductDetail: React.FC = () => {
                 </button>
               </div>
 
-              {/* Wishlist Button */}
-              <button
-                onClick={addToWishlist}
-                disabled={addingToWishlist}
-                className="flex items-center justify-center space-x-2 px-8 py-2 text-gray-600 hover:text-red-500 transition-colors disabled:opacity-50 mb-8"
-              >
-                <Heart size={20} />
-                <span>{addingToWishlist ? 'Adding...' : 'Add to Wishlist'}</span>
-              </button>
-
               {/* Product Features */}
-              <div className="space-y-4 pt-8 border-t border-gray-200">
-                <div className="flex items-center space-x-3">
-                  <Truck className="w-5 h-5 text-green-600" />
-                  <span className="text-gray-700">Free delivery on orders above ₹500</span>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <Shield className="w-5 h-5 text-blue-600" />
-                  <span className="text-gray-700">1 year warranty included</span>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <RotateCcw className="w-5 h-5 text-orange-600" />
-                  <span className="text-gray-700">30-day return policy</span>
-                </div>
+              <div className="mt-8 pt-8 border-t border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Features</h3>
+                <ul className="space-y-2 text-gray-700">
+                  <li className="flex items-center">
+                    <span className="w-2 h-2 bg-gray-400 rounded-full mr-3"></span>
+                    High-quality materials
+                  </li>
+                  <li className="flex items-center">
+                    <span className="w-2 h-2 bg-gray-400 rounded-full mr-3"></span>
+                    Durable construction
+                  </li>
+                  <li className="flex items-center">
+                    <span className="w-2 h-2 bg-gray-400 rounded-full mr-3"></span>
+                    Perfect for hostel use
+                  </li>
+                  <li className="flex items-center">
+                    <span className="w-2 h-2 bg-gray-400 rounded-full mr-3"></span>
+                    Easy maintenance
+                  </li>
+                </ul>
               </div>
             </div>
           </div>
@@ -399,21 +353,21 @@ const ProductDetail: React.FC = () => {
         <section className="py-16 bg-gray-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">You May Also Like</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {relatedProducts.map((relatedProduct) => (
-                <div key={relatedProduct.id} className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-shadow group">
+                <div key={relatedProduct.id} className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-shadow">
                   <Link to={`/product/${relatedProduct.id}`}>
                     <img
                       src={relatedProduct.image_url}
                       alt={relatedProduct.title}
-                      className="w-full h-48 object-cover object-center group-hover:scale-105 transition-transform duration-300"
+                      className="w-full h-48 object-cover object-center hover:scale-105 transition-transform duration-300"
                     />
                     <div className="p-4">
                       <h3 className="font-medium text-gray-900 mb-2 line-clamp-2">
                         {relatedProduct.title}
                       </h3>
                       <p className="text-xl font-bold text-gray-900">
-                        ₹{relatedProduct.price.toLocaleString()}
+                        ₹{relatedProduct.price}
                       </p>
                     </div>
                   </Link>
@@ -427,7 +381,7 @@ const ProductDetail: React.FC = () => {
       {/* Payment Modal */}
       {showPaymentModal && product && (
         <EnhancedQRGenerator
-          amount={product.price * quantity}
+          amount={product.price}
           onClose={() => setShowPaymentModal(false)}
           onPaymentSuccess={handlePaymentSuccess}
           merchantName="DAYKART"
@@ -435,8 +389,6 @@ const ProductDetail: React.FC = () => {
           merchantId="DAYKART001"
         />
       )}
-
-      <Footer />
     </div>
   )
 }

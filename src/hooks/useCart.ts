@@ -61,12 +61,8 @@ export const useCart = () => {
 
   // Show success notification
   const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
-    // Remove any existing notifications
-    const existingNotifications = document.querySelectorAll('.cart-notification')
-    existingNotifications.forEach(notification => notification.remove())
-
     const notification = document.createElement('div')
-    notification.className = `cart-notification fixed top-20 right-4 px-6 py-3 rounded-lg shadow-lg z-50 transition-all transform ${
+    notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 transition-all transform translate-x-0 ${
       type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
     }`
     notification.textContent = message
@@ -93,12 +89,10 @@ export const useCart = () => {
       throw new Error('User not authenticated')
     }
 
-    setLoading(true)
-    
-    // Optimistic update - immediately increase count
-    setCartItemsCount(prev => prev + 1)
-
     try {
+      // Immediately update cart count for instant feedback
+      setCartItemsCount(prev => prev + 1)
+      
       const { error } = await supabase
         .from('cart_items')
         .insert([
@@ -115,8 +109,8 @@ export const useCart = () => {
             .eq('product_id', productId)
 
           if (updateError) throw updateError
-          showNotification('Cart updated!')
-          // Revert optimistic update since we're updating, not adding
+          showNotification('Item quantity updated in cart!')
+          // Don't increment count again for updates
           setCartItemsCount(prev => prev - 1)
         } else {
           throw error
@@ -134,8 +128,6 @@ export const useCart = () => {
       console.error('Error adding to cart:', error)
       showNotification('Failed to add to cart', 'error')
       return { success: false, error: error instanceof Error ? error.message : 'Failed to add to cart' }
-    } finally {
-      setLoading(false)
     }
   }, [user, fetchCartCount])
 
@@ -144,12 +136,10 @@ export const useCart = () => {
       throw new Error('User not authenticated')
     }
 
-    setLoading(true)
-    
-    // Optimistic update
-    setCartItemsCount(prev => Math.max(0, prev - 1))
-    
     try {
+      // Optimistic update
+      setCartItemsCount(prev => Math.max(0, prev - 1))
+      
       const { error } = await supabase
         .from('cart_items')
         .delete()
@@ -168,8 +158,6 @@ export const useCart = () => {
       console.error('Error removing from cart:', error)
       showNotification('Failed to remove from cart', 'error')
       return { success: false, error: error instanceof Error ? error.message : 'Failed to remove from cart' }
-    } finally {
-      setLoading(false)
     }
   }, [user, fetchCartCount])
 
@@ -177,8 +165,6 @@ export const useCart = () => {
     if (!user) {
       throw new Error('User not authenticated')
     }
-
-    setLoading(true)
 
     try {
       const { error } = await supabase
@@ -197,8 +183,6 @@ export const useCart = () => {
       console.error('Error updating cart quantity:', error)
       showNotification('Failed to update cart', 'error')
       return { success: false, error: error instanceof Error ? error.message : 'Failed to update quantity' }
-    } finally {
-      setLoading(false)
     }
   }, [user, fetchCartCount])
 
@@ -206,8 +190,6 @@ export const useCart = () => {
     if (!user) {
       throw new Error('User not authenticated')
     }
-
-    setLoading(true)
 
     try {
       const { error } = await supabase
@@ -225,8 +207,6 @@ export const useCart = () => {
       console.error('Error clearing cart:', error)
       showNotification('Failed to clear cart', 'error')
       return { success: false, error: error instanceof Error ? error.message : 'Failed to clear cart' }
-    } finally {
-      setLoading(false)
     }
   }, [user])
 
