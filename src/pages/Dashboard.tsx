@@ -556,7 +556,7 @@ const Dashboard: React.FC = () => {
           onPaymentSuccess={handlePaymentSuccess}
           merchantName="DAYKART"
           merchantUPI="9652377187-2@ybl"
-          merchantId="DAYKART001"
+          merchantId="Saviti PS Murthy"
         />
       )}
     </div>
