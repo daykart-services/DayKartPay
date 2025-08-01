@@ -4,6 +4,7 @@ import { Heart, ShoppingCart, ArrowLeft, ChevronLeft, ChevronRight } from 'lucid
 import { supabase, Product, type Product as ProductType } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { usePayment } from '../hooks/usePayment'
+import { useCart } from '../hooks/useCart'
 import EnhancedQRGenerator from '../components/EnhancedQRGenerator'
 import Footer from '../components/Footer'
 
@@ -18,6 +19,7 @@ const ProductDetail: React.FC = () => {
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const { user } = useAuth()
   const { processPayment, processing } = usePayment()
+  const { addToCart: addToCartHook } = useCart()
   const navigate = useNavigate()
 
   // Mock multiple images for demonstration
@@ -89,28 +91,9 @@ const ProductDetail: React.FC = () => {
 
     setAddingToCart(true)
     try {
-      const { error } = await supabase
-        .from('cart_items')
-        .insert([
-          { user_id: user.id, product_id: product.id, quantity: 1 }
-        ])
-
-      if (error) {
-        if (error.code === '23505') {
-          // Item already in cart, update quantity
-          const { error: updateError } = await supabase
-            .from('cart_items')
-            .update({ quantity: 1 })
-            .eq('user_id', user.id)
-            .eq('product_id', product.id)
-
-          if (updateError) throw updateError
-          alert('Item quantity updated in cart!')
-        } else {
-          throw error
-        }
-      } else {
-        alert('Added to cart!')
+      const result = await addToCartHook(product.id, 1)
+      if (!result.success) {
+        alert(result.error || 'Failed to add item to cart')
       }
     } catch (error) {
       console.error('Error adding to cart:', error)

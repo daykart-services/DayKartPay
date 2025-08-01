@@ -38,7 +38,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
       if (!result.success) {
         alert(result.error || 'Failed to add item to cart')
       }
-      // Success notification is now handled in useCart hook
+      // Cart count and notifications are handled in useCart hook
     } catch (error) {
       console.error('Error adding to cart:', error)
       alert('Unable to add item to cart. Please try again.')

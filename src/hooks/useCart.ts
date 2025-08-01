@@ -13,7 +13,6 @@ export const useCart = () => {
       return
     }
 
-    setLoading(true)
     try {
       const { count, error } = await supabase
         .from('cart_items')
@@ -25,8 +24,6 @@ export const useCart = () => {
     } catch (error) {
       console.error('Error fetching cart count:', error)
       setCartItemsCount(0)
-    } finally {
-      setLoading(false)
     }
   }, [user])
 
@@ -93,7 +90,7 @@ export const useCart = () => {
     }
 
     try {
-      // Optimistic update - immediately update UI
+      // Immediately update cart count for instant feedback
       setCartItemsCount(prev => prev + 1)
       
       const { error } = await supabase
@@ -113,6 +110,8 @@ export const useCart = () => {
 
           if (updateError) throw updateError
           showNotification('Item quantity updated in cart!')
+          // Don't increment count again for updates
+          setCartItemsCount(prev => prev - 1)
         } else {
           throw error
         }
@@ -211,6 +210,11 @@ export const useCart = () => {
     }
   }, [user])
 
+  // Force refresh cart count - useful for manual updates
+  const refreshCartCount = useCallback(() => {
+    fetchCartCount()
+  }, [fetchCartCount])
+
   return { 
     cartItemsCount, 
     loading,
@@ -218,6 +222,7 @@ export const useCart = () => {
     addToCart,
     removeFromCart,
     updateCartQuantity,
-    clearCart
+    clearCart,
+    refreshCartCount
   }
 }
