@@ -42,7 +42,7 @@ const PhonePeQRGenerator: React.FC<PhonePeQRGeneratorProps> = ({
 
       // Generate PhonePe UPI payment string with proper format
       const transactionNote = `Payment to ${merchantName} - Order ${Date.now()}`
-      const upiString = `upi://pay?pa=merchant@phonepe&pn=${encodeURIComponent(merchantName)}&am=${formattedAmount}&cu=INR&tn=${encodeURIComponent(transactionNote)}&mc=0000&mode=02&purpose=00`
+      const upiString = `upi://pay?pa=9652377187-2@ybl&pn=${encodeURIComponent(merchantName)}&am=${formattedAmount}&cu=INR&tn=${encodeURIComponent(transactionNote)}&mc=0000&mode=02&purpose=00`
 
       // Generate QR code using multiple fallback services
       let qrApiUrl
