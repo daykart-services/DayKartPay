@@ -105,10 +105,6 @@ const CategoryPage: React.FC = () => {
         
         <ProductGrid category={category} />
       </CategoryLayout>
-      
-      <div className="bg-gray-50">
-        <FeaturedProducts />
-      </div>
     </>
   )
 }

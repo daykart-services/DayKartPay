@@ -400,9 +400,6 @@ const Dashboard: React.FC = () => {
                     </div>
                   </div>
                   {/* Add Footer to Cart Section */}
-                  <div className="mt-12">
-                    <Footer />
-                  </div>
                 </div>
               ) : (
                 <div>
@@ -410,10 +407,6 @@ const Dashboard: React.FC = () => {
                     <ShoppingCart size={64} className="mx-auto text-gray-400 mb-4" />
                     <h3 className="text-xl font-medium text-gray-900 mb-2">Your cart is empty</h3>
                     <p className="text-gray-600">Start shopping and add items to your cart!</p>
-                  </div>
-                  {/* Add Footer to Empty Cart */}
-                  <div className="mt-12">
-                    <Footer />
                   </div>
                 </div>
               )}

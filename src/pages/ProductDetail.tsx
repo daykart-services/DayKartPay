@@ -406,8 +406,6 @@ const ProductDetail: React.FC = () => {
           merchantId="DAYKART001"
         />
       )}
-
-      <Footer />
     </div>
   )
 }

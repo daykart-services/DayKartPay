@@ -1,7 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, CheckCircle } from 'lucide-react'
-import Footer from '../components/Footer'
 
 const PaymentPage: React.FC = () => {
   return (
@@ -81,7 +80,6 @@ const PaymentPage: React.FC = () => {
         </div>
       </div>
 
-      <Footer />
     </div>
   )
 }

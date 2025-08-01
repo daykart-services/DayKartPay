@@ -36,7 +36,6 @@ const ProductsPage: React.FC = () => {
       >
         <ProductGrid category={category} />
       </CategoryLayout>
-      <Footer />
     </>
   )
 }
