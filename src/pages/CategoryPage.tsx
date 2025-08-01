@@ -3,11 +3,9 @@ import { useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import type { Product } from '../types'
 import CategoryLayout from '../components/CategoryLayout'
-import ProductCard from '../components/ProductCard'
 import ProductGrid from '../components/ProductGrid'
 import LoadingSpinner from '../components/LoadingSpinner'
 import ErrorMessage from '../components/ErrorMessage'
-import FeaturedProducts from '../components/FeaturedProducts'
 
 const CategoryPage: React.FC = () => {
   const location = useLocation()
@@ -88,24 +86,12 @@ const CategoryPage: React.FC = () => {
   }
 
   return (
-    <>
-      <CategoryLayout 
-        title={getCategoryTitle()} 
-        description={getCategoryDescription()}
-      >
-        <div className="mb-8">
-          <p className="text-gray-600 mb-4">
-            <strong>Note:</strong> This page uses the legacy category routing. 
-            For the new product browsing experience, visit{' '}
-            <a href={`/products/${category}`} className="text-blue-600 hover:text-blue-700 underline">
-              /products/{category}
-            </a>
-          </p>
-        </div>
-        
-        <ProductGrid category={category} />
-      </CategoryLayout>
-    </>
+    <CategoryLayout 
+      title={getCategoryTitle()} 
+      description={getCategoryDescription()}
+    >
+      <ProductGrid category={category} />
+    </CategoryLayout>
   )
 }
 

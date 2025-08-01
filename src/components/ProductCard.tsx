@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Heart, ShoppingCart, ShoppingBag } from 'lucide-react'
 import type { Product } from '../types'
 import { useAuth } from '../contexts/AuthContext'
+import { useCart } from '../hooks/useCart'
 import { supabase } from '../lib/supabase'
 
 interface ProductCardProps {
@@ -18,9 +19,11 @@ const ProductCard: React.FC<ProductCardProps> = ({
   className = '' 
 }) => {
   const { user } = useAuth()
+  const { addToCart } = useCart()
   const navigate = useNavigate()
+  const [isAddingToCart, setIsAddingToCart] = useState(false)
 
-  const addToCart = async (e: React.MouseEvent) => {
+  const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
     
@@ -29,33 +32,27 @@ const ProductCard: React.FC<ProductCardProps> = ({
       return
     }
 
+    setIsAddingToCart(true)
     try {
-      const { error } = await supabase
-        .from('cart_items')
-        .insert([
-          { user_id: user.id, product_id: product.id, quantity: 1 }
-        ])
-
-      if (error) {
-        if (error.code === '23505') {
-          // Item already in cart, update quantity
-          const { error: updateError } = await supabase
-            .from('cart_items')
-            .update({ quantity: 1 })
-            .eq('user_id', user.id)
-            .eq('product_id', product.id)
-
-          if (updateError) throw updateError
-          alert('Item quantity updated in cart!')
-        } else {
-          throw error
-        }
+      const result = await addToCart(product.id, 1)
+      if (result.success) {
+        // Show success notification
+        const notification = document.createElement('div')
+        notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 transition-all'
+        notification.textContent = 'Added to cart!'
+        document.body.appendChild(notification)
+        
+        setTimeout(() => {
+          notification.remove()
+        }, 2000)
       } else {
-        alert('Added to cart!')
+        alert(result.error || 'Failed to add item to cart')
       }
     } catch (error) {
       console.error('Error adding to cart:', error)
       alert('Unable to add item to cart. Please try again.')
+    } finally {
+      setIsAddingToCart(false)
     }
   }
 
@@ -108,8 +105,9 @@ const ProductCard: React.FC<ProductCardProps> = ({
           {showActions && (
             <div className="absolute top-4 right-4 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
               <button
-                onClick={addToCart}
-                className="p-2 bg-white rounded-full shadow-md hover:bg-gray-50 transition-colors"
+                onClick={handleAddToCart}
+                disabled={isAddingToCart}
+                className="p-2 bg-white rounded-full shadow-md hover:bg-gray-50 transition-colors disabled:opacity-50"
                 title="Add to Cart"
               >
                 <ShoppingCart size={20} className="text-gray-600" />

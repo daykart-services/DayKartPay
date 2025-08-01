@@ -1,6 +1,7 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import FeaturedProducts from '../components/FeaturedProducts'
+import VideoSection from '../components/VideoSection'
 import Footer from '../components/Footer'
 
 const Home: React.FC = () => {
@@ -50,6 +51,9 @@ const Home: React.FC = () => {
       </section>
 
       <FeaturedProducts />
+
+      {/* Video Section - Only on Home Page */}
+      <VideoSection />
 
       {/* Admin Login Button */}
       <section className="py-8 bg-gray-50">
