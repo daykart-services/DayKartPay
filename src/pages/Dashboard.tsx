@@ -547,6 +547,18 @@ const Dashboard: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Payment Modal */}
+      {showPaymentModal && (
+        <EnhancedQRGenerator
+          amount={paymentAmount}
+          onClose={() => setShowPaymentModal(false)}
+          onPaymentSuccess={handlePaymentSuccess}
+          merchantName="DAYKART"
+          merchantUPI="merchant@phonepe"
+          merchantId="DAYKART001"
+        />
+      )}
     </div>
   )
 }

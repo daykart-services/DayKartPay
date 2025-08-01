@@ -160,8 +160,7 @@ const EnhancedQRGenerator: React.FC<EnhancedQRGeneratorProps> = ({
     setPaymentStatus('success')
     setTimeout(() => {
       onPaymentSuccess()
-      onClose()
-    }, 2000)
+    }, 1500)
   }
 
   const retryQRGeneration = () => {

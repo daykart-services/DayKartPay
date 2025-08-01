@@ -146,7 +146,12 @@ const ProductDetail: React.FC = () => {
 
     if (!product) return
 
-    setShowPaymentModal(true)
+    try {
+      setShowPaymentModal(true)
+    } catch (error) {
+      console.error('Error initiating buy now:', error)
+      alert('Unable to proceed with purchase. Please try again.')
+    }
   }
 
   const handlePaymentSuccess = async () => {
@@ -167,7 +172,13 @@ const ProductDetail: React.FC = () => {
       const result = await processPayment(paymentData)
       
       if (result.success) {
+        // Close payment modal first
+        setShowPaymentModal(false)
+        
+        // Show success message
         alert('Payment successful! Your order has been placed.')
+        
+        // Navigate to orders page
         navigate('/dashboard?tab=orders')
       } else {
         alert(`Payment failed: ${result.error}`)

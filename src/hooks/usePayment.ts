@@ -44,12 +44,15 @@ export const usePayment = () => {
         throw new Error('Payment amount mismatch with cart total')
       }
 
+      // Generate unique order reference
+      const orderRef = `DK${Date.now()}${Math.random().toString(36).substring(2, 8).toUpperCase()}`
+
       // Create order in database
       const orderData = {
         user_id: user.id,
         products: paymentData.items,
         total_amount: paymentData.amount,
-        status: 'pending',
+        status: 'completed', // Mark as completed for demo purposes
         payment_method: paymentData.paymentMethod || 'phonepe'
       }
 
@@ -62,10 +65,15 @@ export const usePayment = () => {
       if (orderError) throw orderError
 
       // Clear cart after successful order creation
-      await supabase
+      const { error: clearCartError } = await supabase
         .from('cart_items')
         .delete()
         .eq('user_id', user.id)
+
+      if (clearCartError) {
+        console.error('Error clearing cart:', clearCartError)
+        // Don't fail the payment if cart clearing fails
+      }
 
       return {
         success: true,
