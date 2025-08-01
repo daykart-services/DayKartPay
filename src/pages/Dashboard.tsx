@@ -555,7 +555,7 @@ const Dashboard: React.FC = () => {
           onClose={() => setShowPaymentModal(false)}
           onPaymentSuccess={handlePaymentSuccess}
           merchantName="DAYKART"
-          merchantUPI="merchant@phonepe"
+          merchantUPI="9652377187-2@ybl"
           merchantId="DAYKART001"
         />
       )}
