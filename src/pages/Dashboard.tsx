@@ -165,11 +165,21 @@ const Dashboard: React.FC = () => {
       return
     }
 
-    setPaymentAmount(total)
-    setShowPaymentModal(true)
+    try {
+      setPaymentAmount(total)
+      setShowPaymentModal(true)
+    } catch (error) {
+      console.error('Error initiating checkout:', error)
+      alert('Unable to proceed to checkout. Please try again.')
+    }
   }
 
   const handlePaymentSuccess = async () => {
+    if (!user) {
+      alert('Please login to complete payment')
+      return
+    }
+
     try {
       const paymentData = {
         amount: paymentAmount,
@@ -185,7 +195,13 @@ const Dashboard: React.FC = () => {
       const result = await processPayment(paymentData)
       
       if (result.success) {
+        // Close payment modal first
+        setShowPaymentModal(false)
+        
+        // Show success message
         alert('Payment successful! Your order has been placed.')
+        
+        // Refresh data to show updated cart and orders
         fetchUserData() // Refresh data to show updated cart and orders
       } else {
         alert(`Payment failed: ${result.error}`)
