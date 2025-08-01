@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
-import { ShoppingCart, Heart, Package, User, Gift } from 'lucide-react'
+import { Link, useLocation } from 'react-router-dom'
+import { ShoppingCart, Heart, Package, User, Gift, Loader, Trash2 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase, CartItem, WishlistItem, Order } from '../lib/supabase'
 import { usePayment } from '../hooks/usePayment'
@@ -9,7 +9,9 @@ import EnhancedQRGenerator from '../components/EnhancedQRGenerator'
 import ReferralSystem from '../components/ReferralSystem'
 
 const Dashboard: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'profile' | 'cart' | 'liked' | 'orders' | 'referrals'>('profile')
+  const location = useLocation()
+  const initialTab = location.state?.activeTab || 'profile'
+  const [activeTab, setActiveTab] = useState<'profile' | 'cart' | 'liked' | 'orders' | 'referrals'>(initialTab)
   const [cartItems, setCartItems] = useState<CartItem[]>([])
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([])
   const [orders, setOrders] = useState<Order[]>([])
@@ -25,7 +27,7 @@ const Dashboard: React.FC = () => {
   const [paymentAmount, setPaymentAmount] = useState(0)
   const { user } = useAuth()
   const { processPayment, processing } = usePayment()
-  const { removeFromCart: removeCartItem } = useCart()
+  const { removeFromCart: removeCartItem, refreshCartCount } = useCart()
 
   useEffect(() => {
     if (user) {
@@ -93,7 +95,8 @@ const Dashboard: React.FC = () => {
     try {
       const result = await removeCartItem(itemId)
       if (result.success) {
-        fetchUserData()
+        await fetchUserData()
+        refreshCartCount()
       } else {
         alert(result.error || 'Failed to remove item from cart')
       }
@@ -114,7 +117,7 @@ const Dashboard: React.FC = () => {
         .from('wishlist_items')
         .delete()
         .eq('id', itemId)
-        .eq('user_id', user.id) // Additional security check
+        .eq('user_id', user.id)
 
       if (error) throw error
       fetchUserData()
@@ -186,7 +189,8 @@ const Dashboard: React.FC = () => {
       
       if (result.success) {
         alert('Payment successful! Your order has been placed.')
-        fetchUserData() // Refresh data to show updated cart and orders
+        await fetchUserData()
+        refreshCartCount()
       } else {
         alert(`Payment failed: ${result.error}`)
       }
@@ -199,7 +203,10 @@ const Dashboard: React.FC = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">Loading dashboard...</div>
+        <div className="text-center">
+          <Loader className="animate-spin h-8 w-8 mx-auto mb-4" />
+          <p>Loading dashboard...</p>
+        </div>
       </div>
     )
   }
@@ -207,13 +214,13 @@ const Dashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-4xl font-bold text-center text-gray-900 mb-8">DASHBOARD</h1>
+        <h1 className="text-4xl font-bold text-center text-gray-900 mb-8">My Dashboard</h1>
         
         {/* Tab Navigation */}
-        <div className="flex justify-center space-x-8 mb-8">
+        <div className="flex justify-center space-x-8 mb-8 overflow-x-auto">
           <button
             onClick={() => setActiveTab('profile')}
-            className={`flex items-center space-x-2 pb-2 border-b-2 ${
+            className={`flex items-center space-x-2 pb-2 border-b-2 whitespace-nowrap ${
               activeTab === 'profile' 
                 ? 'border-black text-black' 
                 : 'border-transparent text-gray-500 hover:text-gray-700'
@@ -225,7 +232,7 @@ const Dashboard: React.FC = () => {
           
           <button
             onClick={() => setActiveTab('cart')}
-            className={`flex items-center space-x-2 pb-2 border-b-2 ${
+            className={`flex items-center space-x-2 pb-2 border-b-2 whitespace-nowrap ${
               activeTab === 'cart' 
                 ? 'border-black text-black' 
                 : 'border-transparent text-gray-500 hover:text-gray-700'
@@ -237,31 +244,31 @@ const Dashboard: React.FC = () => {
           
           <button
             onClick={() => setActiveTab('liked')}
-            className={`flex items-center space-x-2 pb-2 border-b-2 ${
+            className={`flex items-center space-x-2 pb-2 border-b-2 whitespace-nowrap ${
               activeTab === 'liked' 
                 ? 'border-black text-black' 
                 : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
           >
             <Heart size={20} />
-            <span className="font-medium">Liked ({wishlistItems.length})</span>
+            <span className="font-medium">Wishlist ({wishlistItems.length})</span>
           </button>
           
           <button
             onClick={() => setActiveTab('orders')}
-            className={`flex items-center space-x-2 pb-2 border-b-2 ${
+            className={`flex items-center space-x-2 pb-2 border-b-2 whitespace-nowrap ${
               activeTab === 'orders' 
                 ? 'border-black text-black' 
                 : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
           >
             <Package size={20} />
-            <span className="font-medium">Orders</span>
+            <span className="font-medium">Orders ({orders.length})</span>
           </button>
           
           <button
             onClick={() => setActiveTab('referrals')}
-            className={`flex items-center space-x-2 pb-2 border-b-2 ${
+            className={`flex items-center space-x-2 pb-2 border-b-2 whitespace-nowrap ${
               activeTab === 'referrals' 
                 ? 'border-black text-black' 
                 : 'border-transparent text-gray-500 hover:text-gray-700'
@@ -372,48 +379,57 @@ const Dashboard: React.FC = () => {
             <div className="p-8">
               {cartItems.length > 0 ? (
                 <div>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-6">Shopping Cart</h2>
                   <div className="space-y-4">
                     {cartItems.map((item) => (
-                      <div key={item.id} className="flex items-center space-x-4 p-4 border border-gray-200 rounded-lg">
+                      <div key={item.id} className="flex items-center space-x-4 p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
                         <img
                           src={item.products?.image_url || 'https://images.pexels.com/photos/1034596/pexels-photo-1034596.jpeg?auto=compress&cs=tinysrgb&w=200'}
                           alt={item.products?.title || 'Product'}
-                          className="w-16 h-16 object-cover rounded"
+                          className="w-20 h-20 object-cover rounded-lg"
                         />
                         <div className="flex-1">
-                          <h3 className="font-medium">{item.products?.title || 'Unknown Product'}</h3>
+                          <h3 className="font-semibold text-lg">{item.products?.title || 'Unknown Product'}</h3>
                           <p className="text-gray-600">Quantity: {item.quantity}</p>
-                          <p className="text-lg font-semibold">₹{(item.products?.price || 0) * item.quantity}</p>
+                          <p className="text-xl font-bold text-green-600">₹{((item.products?.price || 0) * item.quantity).toLocaleString()}</p>
                         </div>
                         <button
                           onClick={() => removeFromCart(item.id)}
-                          className="text-red-600 hover:text-red-700"
+                          className="flex items-center space-x-1 text-red-600 hover:text-red-700 transition-colors"
                         >
-                          Remove
+                          <Trash2 size={16} />
+                          <span>Remove</span>
                         </button>
                       </div>
                     ))}
                   </div>
-                  <div className="mt-6 pt-6 border-t">
-                    <div className="flex justify-between items-center text-xl font-bold">
-                      <span>Total: ₹{getTotalCartValue()}</span>
+                  <div className="mt-8 pt-6 border-t border-gray-200">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="text-lg text-gray-600">Total Items: {cartItems.length}</p>
+                        <p className="text-3xl font-bold text-gray-900">₹{getTotalCartValue().toLocaleString()}</p>
+                      </div>
                       <button 
                         onClick={handleCheckout}
                         disabled={processing}
-                        className="px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-8 py-3 bg-black text-white font-semibold rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                       >
-                        {processing ? 'Processing...' : 'Checkout'}
+                        {processing ? 'Processing...' : 'Proceed to Checkout'}
                       </button>
                     </div>
                   </div>
                 </div>
               ) : (
-                <div>
-                  <div className="text-center py-12">
-                    <ShoppingCart size={64} className="mx-auto text-gray-400 mb-4" />
-                    <h3 className="text-xl font-medium text-gray-900 mb-2">Your cart is empty</h3>
-                    <p className="text-gray-600">Start shopping and add items to your cart!</p>
-                  </div>
+                <div className="text-center py-12">
+                  <ShoppingCart size={64} className="mx-auto text-gray-400 mb-4" />
+                  <h3 className="text-xl font-medium text-gray-900 mb-2">Your cart is empty</h3>
+                  <p className="text-gray-600 mb-6">Start shopping and add items to your cart!</p>
+                  <Link
+                    to="/products"
+                    className="inline-block px-6 py-3 bg-black text-white font-medium rounded-lg hover:bg-gray-800 transition-colors"
+                  >
+                    Start Shopping
+                  </Link>
                 </div>
               )}
             </div>
@@ -421,31 +437,46 @@ const Dashboard: React.FC = () => {
 
           {activeTab === 'liked' && (
             <div className="p-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">My Wishlist</h2>
               {wishlistItems.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {wishlistItems.map((item) => (
-                    <div key={item.id} className="border border-gray-200 rounded-lg p-4">
+                    <div key={item.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-lg transition-shadow">
                       <img
                         src={item.products?.image_url || 'https://images.pexels.com/photos/1034596/pexels-photo-1034596.jpeg?auto=compress&cs=tinysrgb&w=400'}
                         alt={item.products?.title || 'Product'}
-                        className="w-full h-48 object-cover rounded mb-4"
+                        className="w-full h-48 object-cover rounded-lg mb-4"
                       />
-                      <h3 className="font-medium mb-2">{item.products?.title || 'Unknown Product'}</h3>
-                      <p className="text-lg font-semibold mb-4">₹{item.products?.price || 0}</p>
-                      <button
-                        onClick={() => removeFromWishlist(item.id)}
-                        className="w-full py-2 text-red-600 border border-red-600 rounded hover:bg-red-50"
-                      >
-                        Remove from Wishlist
-                      </button>
+                      <h3 className="font-semibold mb-2">{item.products?.title || 'Unknown Product'}</h3>
+                      <p className="text-xl font-bold text-gray-900 mb-4">₹{(item.products?.price || 0).toLocaleString()}</p>
+                      <div className="flex space-x-2">
+                        <Link
+                          to={`/product/${item.product_id}`}
+                          className="flex-1 py-2 text-center bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
+                        >
+                          View Product
+                        </Link>
+                        <button
+                          onClick={() => removeFromWishlist(item.id)}
+                          className="flex-1 py-2 text-red-600 border border-red-600 rounded-lg hover:bg-red-50 transition-colors"
+                        >
+                          Remove
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
               ) : (
                 <div className="text-center py-12">
                   <Heart size={64} className="mx-auto text-gray-400 mb-4" />
-                  <h3 className="text-xl font-medium text-gray-900 mb-2">No liked items</h3>
-                  <p className="text-gray-600">Add products to your wishlist to see them here!</p>
+                  <h3 className="text-xl font-medium text-gray-900 mb-2">No items in wishlist</h3>
+                  <p className="text-gray-600 mb-6">Add products to your wishlist to see them here!</p>
+                  <Link
+                    to="/products"
+                    className="inline-block px-6 py-3 bg-black text-white font-medium rounded-lg hover:bg-gray-800 transition-colors"
+                  >
+                    Browse Products
+                  </Link>
                 </div>
               )}
             </div>
@@ -453,6 +484,7 @@ const Dashboard: React.FC = () => {
 
           {activeTab === 'orders' && (
             <div className="p-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">Order History</h2>
               {orders.length > 0 ? (
                 <div className="space-y-6">
                   {orders.map((order) => (
@@ -461,7 +493,7 @@ const Dashboard: React.FC = () => {
                         <div>
                           <h3 className="text-lg font-semibold text-gray-900">Order #{order.id.slice(0, 8)}</h3>
                           <p className="text-gray-600 mt-1">
-                            <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
+                            <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
                               order.status === 'completed' ? 'bg-green-100 text-green-800' :
                               order.status === 'processing' ? 'bg-blue-100 text-blue-800' :
                               order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
@@ -479,7 +511,7 @@ const Dashboard: React.FC = () => {
                           </p>
                         </div>
                         <div className="text-right">
-                          <p className="text-2xl font-bold text-gray-900">₹{order.total_amount}</p>
+                          <p className="text-2xl font-bold text-gray-900">₹{order.total_amount.toLocaleString()}</p>
                           <p className="text-sm text-gray-500">Total Amount</p>
                         </div>
                       </div>
@@ -493,7 +525,7 @@ const Dashboard: React.FC = () => {
                               <div key={index} className="flex justify-between items-center text-sm">
                                 <span className="text-gray-700">{item.title || `Item ${index + 1}`}</span>
                                 <span className="text-gray-600">
-                                  {item.quantity ? `${item.quantity}x ` : ''}₹{item.price || 0}
+                                  {item.quantity ? `${item.quantity}x ` : ''}₹{(item.price || 0).toLocaleString()}
                                 </span>
                               </div>
                             ))}
@@ -512,10 +544,10 @@ const Dashboard: React.FC = () => {
                 <div className="text-center py-12">
                   <Package size={64} className="mx-auto text-gray-400 mb-4" />
                   <h3 className="text-xl font-medium text-gray-900 mb-2">No orders yet</h3>
-                  <p className="text-gray-600">Your order history will appear here!</p>
+                  <p className="text-gray-600 mb-6">Your order history will appear here!</p>
                   <Link
                     to="/products"
-                    className="inline-block mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    className="inline-block px-6 py-3 bg-black text-white font-medium rounded-lg hover:bg-gray-800 transition-colors"
                   >
                     Start Shopping
                   </Link>
@@ -531,6 +563,18 @@ const Dashboard: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Payment Modal */}
+      {showPaymentModal && (
+        <EnhancedQRGenerator
+          amount={paymentAmount}
+          onClose={() => setShowPaymentModal(false)}
+          onPaymentSuccess={handlePaymentSuccess}
+          merchantName="DAYKART"
+          merchantUPI="merchant@phonepe"
+          merchantId="DAYKART001"
+        />
+      )}
     </div>
   )
 }

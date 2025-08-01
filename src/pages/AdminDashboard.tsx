@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'
-import { Plus, Edit, Trash2, Package, Users } from 'lucide-react'
+import { Plus, Edit, Trash2, Package, Users, Eye, EyeOff } from 'lucide-react'
 import { supabase, Product, Order } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
+import LoadingSpinner from '../components/LoadingSpinner'
 
 const AdminDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'products' | 'orders'>('products')
@@ -161,7 +162,7 @@ const AdminDashboard: React.FC = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">Loading admin dashboard...</div>
+        <LoadingSpinner size="lg" />
       </div>
     )
   }
@@ -169,7 +170,10 @@ const AdminDashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-4xl font-bold text-center text-gray-900 mb-8">ADMIN DASHBOARD</h1>
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
+          <p className="text-gray-600">Manage products and orders</p>
+        </div>
         
         {/* Tab Navigation */}
         <div className="flex justify-center space-x-8 mb-8">
@@ -212,13 +216,13 @@ const AdminDashboard: React.FC = () => {
                       title: '', 
                       image_url: '', 
                       price: '', 
-                     stock_quantity: '',
+                      stock_quantity: '',
                       description: '', 
                       category: 'beds',
                       is_featured: false 
                     })
                   }}
-                  className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                  className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                 >
                   <Plus size={20} />
                   <span>Add Product</span>
@@ -227,8 +231,8 @@ const AdminDashboard: React.FC = () => {
 
               {/* Product Form Modal */}
               {showProductForm && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                  <div className="bg-white rounded-lg p-6 w-full max-w-md">
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                  <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
                     <h3 className="text-lg font-bold mb-4">
                       {editingProduct ? 'Edit Product' : 'Add New Product'}
                     </h3>
@@ -315,7 +319,7 @@ const AdminDashboard: React.FC = () => {
                       <div className="flex space-x-3">
                         <button
                           type="submit"
-                          className="flex-1 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                          className="flex-1 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                         >
                           {editingProduct ? 'Update' : 'Add'} Product
                         </button>
@@ -325,7 +329,7 @@ const AdminDashboard: React.FC = () => {
                             setShowProductForm(false)
                             setEditingProduct(null)
                           }}
-                          className="flex-1 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
+                          className="flex-1 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
                         >
                           Cancel
                         </button>
@@ -339,7 +343,7 @@ const AdminDashboard: React.FC = () => {
               {products.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {products.map((product) => (
-                    <div key={product.id} className="border border-gray-200 rounded-lg p-4">
+                    <div key={product.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-lg transition-shadow">
                       {product.is_featured && (
                         <div className="mb-2">
                           <span className="inline-block px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded">
@@ -354,22 +358,22 @@ const AdminDashboard: React.FC = () => {
                       />
                       <h3 className="font-medium mb-2">{product.title}</h3>
                       <p className="text-gray-600 text-sm mb-2 line-clamp-2">{product.description}</p>
-                      <p className="text-lg font-semibold mb-2">₹{product.price}</p>
-                      <p className="text-sm text-gray-500 mb-4 capitalize">{product.category}</p>
+                      <p className="text-lg font-semibold mb-2">₹{product.price.toLocaleString()}</p>
+                      <p className="text-sm text-gray-500 mb-2 capitalize">{product.category}</p>
                       <p className="text-sm text-gray-600 mb-4">
                         Stock: {(product as any).stock_quantity || 0} units
                       </p>
                       <div className="flex space-x-2">
                         <button
                           onClick={() => startEdit(product)}
-                          className="flex-1 flex items-center justify-center space-x-1 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                          className="flex-1 flex items-center justify-center space-x-1 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
                         >
                           <Edit size={16} />
                           <span>Edit</span>
                         </button>
                         <button
                           onClick={() => deleteProduct(product.id)}
-                          className="flex-1 flex items-center justify-center space-x-1 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                          className="flex-1 flex items-center justify-center space-x-1 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
                         >
                           <Trash2 size={16} />
                           <span>Delete</span>
@@ -395,20 +399,29 @@ const AdminDashboard: React.FC = () => {
               {orders.length > 0 ? (
                 <div className="space-y-4">
                   {orders.map((order) => (
-                    <div key={order.id} className="border border-gray-200 rounded-lg p-6">
+                    <div key={order.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow">
                       <div className="flex justify-between items-start">
                         <div>
                           <h3 className="font-medium text-lg">Order #{order.id.slice(0, 8)}</h3>
-                          <p className="text-gray-600">User ID: {order.user_id}</p>
-                          <p className="text-gray-600">Status: <span className="capitalize">{order.status}</span></p>
+                          <p className="text-gray-600">User ID: {order.user_id.slice(0, 8)}</p>
+                          <p className="text-gray-600">
+                            Status: <span className={`capitalize px-2 py-1 rounded-full text-xs font-medium ${
+                              order.status === 'completed' ? 'bg-green-100 text-green-800' :
+                              order.status === 'processing' ? 'bg-blue-100 text-blue-800' :
+                              order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-gray-100 text-gray-800'
+                            }`}>
+                              {order.status}
+                            </span>
+                          </p>
                           <p className="text-gray-600">Date: {new Date(order.created_at).toLocaleDateString()}</p>
-                          <p className="text-gray-600">Products: {order.product_ids.length} items</p>
+                          <p className="text-gray-600">Items: {order.products?.length || 0} products</p>
                         </div>
                         <div className="text-right">
-                          <p className="text-2xl font-bold text-green-600">₹{order.total_amount}</p>
+                          <p className="text-2xl font-bold text-green-600">₹{order.total_amount.toLocaleString()}</p>
                           <button
                             onClick={() => deleteOrder(order.id)}
-                            className="mt-2 flex items-center space-x-1 px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+                            className="mt-2 flex items-center space-x-1 px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
                           >
                             <Trash2 size={16} />
                             <span>Delete</span>

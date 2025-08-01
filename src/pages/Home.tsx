@@ -12,58 +12,54 @@ const Home: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div className="text-center lg:text-left">
-                <p className="text-sm text-gray-600 mb-4">New in</p>
-                <h1 className="text-5xl font-bold text-gray-900 mb-4">
-                  PREMIUM<br />
-                  COLLECTION
-                </h1>
-                <p className="text-gray-700 text-lg mb-8">
-                  Explore our new collection and make yourself feel at home.
-                </p>
-                <Link
-                  to="/products"
-                  className="inline-block px-8 py-3 bg-black text-white font-medium rounded-lg hover:bg-gray-800 transition-colors"
-                >
-                  Explore Now
-                </Link>
+              <p className="text-sm text-gray-600 mb-4">New Collection 2025</p>
+              <h1 className="text-5xl font-bold text-gray-900 mb-4">
+                PREMIUM<br />
+                HOSTEL ESSENTIALS
+              </h1>
+              <p className="text-gray-700 text-lg mb-8">
+                Discover our curated collection of high-quality products designed specifically for modern hostel living. From comfortable bedding to essential study accessories.
+              </p>
+              <Link
+                to="/products"
+                className="inline-block px-8 py-3 bg-black text-white font-medium rounded-lg hover:bg-gray-800 transition-colors"
+              >
+                Shop Now
+              </Link>
             </div>
             
             <div className="relative flex justify-center">
-              <div className="w-80 h-80 bg-black mx-auto relative overflow-hidden rounded-lg">
+              <div className="w-80 h-80 bg-gradient-to-br from-gray-100 to-gray-200 mx-auto relative overflow-hidden rounded-lg shadow-lg">
                 <img
-                  src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQo7f_bvzfHRsX6r0pqYkgJVNrY76_2qYe1N2jKQ2HBtV_kjK6CFW2mqoo&s"
-                  alt="Premium Mattress"
-                  className="relative z-10 w-full h-full object-cover object-center"
+                  src="https://images.pexels.com/photos/1034596/pexels-photo-1034596.jpeg?auto=compress&cs=tinysrgb&w=800"
+                  alt="Premium Hostel Products"
+                  className="relative z-10 w-full h-full object-cover object-center hover:scale-105 transition-transform duration-500"
                 />
-              </div>
-              
-              {/* Scroll indicator */}
-              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-16">
-                <div className="text-center">
-                  <div className="w-8 h-8 border-2 border-gray-300 rounded-full flex items-center justify-center mx-auto mb-2">
-                    <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
         </div>
       </section>
 
+      {/* Featured Products */}
       <FeaturedProducts />
 
       {/* Video Section - Only on Home Page */}
       <VideoSection />
 
-      {/* Admin Login Button */}
-      <section className="py-8 bg-gray-50">
+      {/* Admin Portal Section */}
+      <section className="py-12 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <Link
-            to="/admin-login"
-            className="inline-block px-6 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors"
-          >
-            Admin Portal
-          </Link>
+          <div className="bg-white rounded-lg shadow-sm p-8 max-w-md mx-auto">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Administrator Access</h3>
+            <p className="text-gray-600 mb-6">Manage products, orders, and system settings</p>
+            <Link
+              to="/admin-login"
+              className="inline-block px-6 py-3 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors"
+            >
+              Admin Portal
+            </Link>
+          </div>
         </div>
       </section>
 
