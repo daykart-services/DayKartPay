@@ -22,8 +22,8 @@ const EnhancedQRGenerator: React.FC<EnhancedQRGeneratorProps> = ({
   onClose,
   onPaymentSuccess,
   merchantName = "DAYKART",
-  merchantUPI = "merchant@phonepe",
-  merchantId = "DAYKART001"
+  merchantUPI = "9652377187-2@ybl",
+  merchantId = "Saviti PS Murthy"
 }) => {
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('')
   const [loading, setLoading] = useState(true)
