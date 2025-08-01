@@ -14,7 +14,7 @@ const PhonePeQRGenerator: React.FC<PhonePeQRGeneratorProps> = ({
   onClose,
   onPaymentSuccess,
   merchantName = "DAYKART",
-  merchantId = "DAYKART001"
+  merchantId = "Saviti PS Murthy"
 }) => {
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('')
   const [loading, setLoading] = useState(true)
