@@ -44,39 +44,32 @@ const Footer: React.FC = () => {
             </div>
           </div>
 
-          {/* Social Media Icons */}
-          <div className="flex justify-center space-x-6 mt-8 pt-8 border-t border-gray-200">
-            <a href="#" className="text-gray-400 hover:text-gray-600 transition-colors">
-              <Facebook size={24} />
-            </a>
-            <a href="#" className="text-gray-400 hover:text-gray-600 transition-colors">
-              <Instagram size={24} />
-            </a>
-        {/* Admin Login and Social Media */}
-        <div className="mt-8 pt-8 border-t border-gray-200">
-          <div className="flex flex-col items-center space-y-4">
-            {/* Admin Login Button */}
-            <Link
-              to="/admin-login"
-              className="text-xs text-gray-500 hover:text-gray-700 underline transition-colors"
-            >
-              Admin Portal
-            </Link>
-            
-            {/* Social Media Icons */}
-            <div className="flex justify-center space-x-6">
-              <a href="#" className="text-gray-400 hover:text-gray-600 transition-colors">
-                <Facebook size={24} />
-              </a>
-              <a href="#" className="text-gray-400 hover:text-gray-600 transition-colors">
-                <Instagram size={24} />
-              </a>
-              <a href="#" className="text-gray-400 hover:text-gray-600 transition-colors">
-                <Youtube size={24} />
-              </a>
-              <a href="#" className="text-gray-400 hover:text-gray-600 transition-colors">
-                <Twitter size={24} />
-              </a>
+          {/* Admin Login and Social Media */}
+          <div className="mt-8 pt-8 border-t border-gray-200">
+            <div className="flex flex-col items-center space-y-4">
+              {/* Admin Login Button */}
+              <Link
+                to="/admin-login"
+                className="text-xs text-gray-500 hover:text-gray-700 underline transition-colors"
+              >
+                Admin Portal
+              </Link>
+              
+              {/* Social Media Icons */}
+              <div className="flex justify-center space-x-6">
+                <a href="#" className="text-gray-400 hover:text-gray-600 transition-colors">
+                  <Facebook size={24} />
+                </a>
+                <a href="#" className="text-gray-400 hover:text-gray-600 transition-colors">
+                  <Instagram size={24} />
+                </a>
+                <a href="#" className="text-gray-400 hover:text-gray-600 transition-colors">
+                  <Youtube size={24} />
+                </a>
+                <a href="#" className="text-gray-400 hover:text-gray-600 transition-colors">
+                  <Twitter size={24} />
+                </a>
+              </div>
             </div>
           </div>
         </div>
@@ -86,5 +79,3 @@ const Footer: React.FC = () => {
 }
 
 export default Footer
-  )
-}
