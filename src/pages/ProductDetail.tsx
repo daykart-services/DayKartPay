@@ -23,10 +23,16 @@ const ProductDetail: React.FC = () => {
   // Mock multiple images for demonstration
   const productImages = product ? [
     product.image_url,
-    // Add some variation for demo - in real app these would be different images
-    product.image_url.replace('w=800', 'w=800&sat=-20'),
-    product.image_url.replace('w=800', 'w=800&blur=1'),
-    product.image_url.replace('w=800', 'w=800&sepia=50'),
+    // Use additional images from image_urls array if available
+    ...((product as any).image_urls && Array.isArray((product as any).image_urls) 
+      ? (product as any).image_urls.slice(1) 
+      : [
+          // Fallback variations for demo
+          product.image_url.replace('w=800', 'w=800&sat=-20'),
+          product.image_url.replace('w=800', 'w=800&blur=1'),
+          product.image_url.replace('w=800', 'w=800&sepia=50'),
+        ]
+    )
   ] : []
 
   useEffect(() => {

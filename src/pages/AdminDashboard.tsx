@@ -14,7 +14,7 @@ const AdminDashboard: React.FC = () => {
 
   const [productForm, setProductForm] = useState({
     title: '',
-    image_url: '',
+    image_urls: [''],
     price: '',
     stock_quantity: '',
     description: '',
@@ -55,10 +55,19 @@ const AdminDashboard: React.FC = () => {
   const handleProductSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
+    // Filter out empty image URLs
+    const validImageUrls = productForm.image_urls.filter(url => url.trim() !== '')
+    
+    if (validImageUrls.length === 0) {
+      alert('Please provide at least one image URL')
+      return
+    }
+    
     try {
       const productData = {
         title: productForm.title,
-        image_url: productForm.image_url,
+        image_url: validImageUrls[0], // Primary image for backward compatibility
+        image_urls: validImageUrls, // Store all images as JSON array
         price: parseFloat(productForm.price),
         stock_quantity: parseInt(productForm.stock_quantity) || 0,
         description: productForm.description,
@@ -83,7 +92,7 @@ const AdminDashboard: React.FC = () => {
 
       setProductForm({ 
         title: '', 
-        image_url: '', 
+        image_urls: [''], 
         price: '', 
         stock_quantity: '',
         description: '', 
@@ -135,9 +144,18 @@ const AdminDashboard: React.FC = () => {
 
   const startEdit = (product: Product) => {
     setEditingProduct(product)
+    
+    // Handle both old single image_url and new multiple image_urls
+    let imageUrls = ['']
+    if ((product as any).image_urls && Array.isArray((product as any).image_urls)) {
+      imageUrls = (product as any).image_urls
+    } else if (product.image_url) {
+      imageUrls = [product.image_url]
+    }
+    
     setProductForm({
       title: product.title,
-      image_url: product.image_url,
+      image_urls: imageUrls,
       price: product.price.toString(),
       stock_quantity: (product as any).stock_quantity?.toString() || '0',
       description: product.description,
@@ -145,6 +163,32 @@ const AdminDashboard: React.FC = () => {
       is_featured: product.is_featured
     })
     setShowProductForm(true)
+  }
+
+  const addImageUrl = () => {
+    setProductForm({
+      ...productForm,
+      image_urls: [...productForm.image_urls, '']
+    })
+  }
+
+  const removeImageUrl = (index: number) => {
+    if (productForm.image_urls.length > 1) {
+      const newImageUrls = productForm.image_urls.filter((_, i) => i !== index)
+      setProductForm({
+        ...productForm,
+        image_urls: newImageUrls
+      })
+    }
+  }
+
+  const updateImageUrl = (index: number, value: string) => {
+    const newImageUrls = [...productForm.image_urls]
+    newImageUrls[index] = value
+    setProductForm({
+      ...productForm,
+      image_urls: newImageUrls
+    })
   }
 
   if (!isAdmin) {
@@ -210,7 +254,7 @@ const AdminDashboard: React.FC = () => {
                     setEditingProduct(null)
                     setProductForm({ 
                       title: '', 
-                      image_url: '', 
+                      image_urls: [''], 
                       price: '', 
                      stock_quantity: '',
                       description: '', 
@@ -227,12 +271,16 @@ const AdminDashboard: React.FC = () => {
 
               {/* Product Form Modal */}
               {showProductForm && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                  <div className="bg-white rounded-lg p-6 w-full max-w-md">
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                  <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+                    <div className="p-6 border-b border-gray-200">
                     <h3 className="text-lg font-bold mb-4">
                       {editingProduct ? 'Edit Product' : 'Add New Product'}
                     </h3>
-                    <form onSubmit={handleProductSubmit} className="space-y-4">
+                    </div>
+                    
+                    <div className="flex-1 overflow-y-auto p-6">
+                    <form onSubmit={handleProductSubmit} className="space-y-6">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
                         <input
@@ -243,22 +291,49 @@ const AdminDashboard: React.FC = () => {
                           required
                         />
                       </div>
+                      
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
-                        <div className="space-y-2">
-                          <input
-                            type="url"
-                            value={productForm.image_url}
-                            onChange={(e) => setProductForm({ ...productForm, image_url: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
-                            placeholder="https://example.com/image.jpg"
-                            required
-                          />
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Product Images</label>
+                        <div className="space-y-3">
+                          {productForm.image_urls.map((url, index) => (
+                            <div key={index} className="flex items-center space-x-2">
+                              <div className="flex-1">
+                                <input
+                                  type="url"
+                                  value={url}
+                                  onChange={(e) => updateImageUrl(index, e.target.value)}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                                  placeholder={`Image URL ${index + 1} (https://example.com/image.jpg)`}
+                                  required={index === 0}
+                                />
+                              </div>
+                              {productForm.image_urls.length > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => removeImageUrl(index)}
+                                  className="px-3 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
+                                  title="Remove image"
+                                >
+                                  ×
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                          
+                          <button
+                            type="button"
+                            onClick={addImageUrl}
+                            className="w-full py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-gray-400 hover:text-gray-700 transition-colors"
+                          >
+                            + Add Another Image
+                          </button>
+                          
                           <p className="text-xs text-gray-500">
-                            Tip: Use high-quality images (800x800px recommended)
+                            Tip: Use high-quality images (800x800px recommended). First image will be the primary display image.
                           </p>
                         </div>
                       </div>
+                      
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Price (₹)</label>
                         <input
@@ -270,6 +345,7 @@ const AdminDashboard: React.FC = () => {
                           required
                         />
                       </div>
+                      
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Stock Quantity</label>
                         <div className="space-y-2">
@@ -288,6 +364,7 @@ const AdminDashboard: React.FC = () => {
                           </p>
                         </div>
                       </div>
+                      
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
                         <select
@@ -302,6 +379,7 @@ const AdminDashboard: React.FC = () => {
                           <option value="dorm">Dorm</option>
                         </select>
                       </div>
+                      
                       <div>
                         <label className="flex items-center space-x-2">
                           <input
@@ -313,6 +391,7 @@ const AdminDashboard: React.FC = () => {
                           <span className="text-sm font-medium text-gray-700">Featured Product</span>
                         </label>
                       </div>
+                      
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
                         <textarea
@@ -323,9 +402,13 @@ const AdminDashboard: React.FC = () => {
                           required
                         />
                       </div>
+                    </form>
+                    </div>
+                    
+                    <div className="p-6 border-t border-gray-200">
                       <div className="flex space-x-3">
                         <button
-                          type="submit"
+                          onClick={handleProductSubmit}
                           className="flex-1 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
                         >
                           {editingProduct ? 'Update' : 'Add'} Product
@@ -341,7 +424,7 @@ const AdminDashboard: React.FC = () => {
                           Cancel
                         </button>
                       </div>
-                    </form>
+                    </div>
                   </div>
                 </div>
               )}
@@ -362,6 +445,14 @@ const AdminDashboard: React.FC = () => {
                         src={product.image_url}
                         alt={product.title}
                         className="w-full h-48 object-cover rounded mb-4"
+                        onError={(e) => {
+                          // Fallback to first image from image_urls array if available
+                          const target = e.target as HTMLImageElement
+                          const imageUrls = (product as any).image_urls
+                          if (imageUrls && Array.isArray(imageUrls) && imageUrls.length > 0 && imageUrls[0] !== target.src) {
+                            target.src = imageUrls[0]
+                          }
+                        }}
                       />
                       <h3 className="font-medium mb-2">{product.title}</h3>
                       <p className="text-gray-600 text-sm mb-2 line-clamp-2">{product.description}</p>
