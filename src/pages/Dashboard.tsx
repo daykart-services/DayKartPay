@@ -530,30 +530,14 @@ const Dashboard: React.FC = () => {
                                   {item.quantity ? `${item.quantity}x ` : ''}₹{item.price || 0}
                                 </span>
                               </div>
-                            className="w-20 h-20 object-cover rounded-lg"
-                          <div className="flex flex-col space-y-2">
-                            <Link
-                              to={`/product/${item.product_id}`}
-                              className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors text-center"
-                            >
-                    <div className="mt-6 pt-6 border-t bg-gray-50 p-4 rounded-lg">
-                      <div className="flex justify-between items-center mb-4">
-                        <span className="text-xl font-bold text-gray-900">Total: ₹{getTotalCartValue()}</span>
-                      </div>
-                      <div className="flex space-x-4">
-                              onClick={() => removeFromCart(item.id)}
-                              className="px-3 py-1 text-sm text-red-600 hover:text-red-700 border border-red-200 rounded hover:bg-red-50 transition-colors"
+                            ))}
+                            {order.products.length > 3 && (
+                              <p className="text-sm text-gray-500 text-center py-2">
                                 +{order.products.length - 3} more item{order.products.length - 3 > 1 ? 's' : ''}
-                          className="flex-1 px-6 py-3 bg-black text-white font-semibold rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                            </button>
+                              </p>
+                            )}
                           </div>
                         </div>
-                        <Link
-                          to="/products"
-                          className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors text-center"
-                        >
-                          Continue Shopping
-                        </Link>
                       )}
                     </div>
                   ))}
