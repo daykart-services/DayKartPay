@@ -90,9 +90,6 @@ export const useCart = () => {
     }
 
     try {
-      // Immediately update cart count for instant feedback
-      setCartItemsCount(prev => prev + 1)
-      
       const { error } = await supabase
         .from('cart_items')
         .insert([
@@ -110,8 +107,6 @@ export const useCart = () => {
 
           if (updateError) throw updateError
           showNotification('Item quantity updated in cart!')
-          // Don't increment count again for updates
-          setCartItemsCount(prev => prev - 1)
         } else {
           throw error
         }
@@ -123,8 +118,6 @@ export const useCart = () => {
       await fetchCartCount()
       return { success: true }
     } catch (error) {
-      // Revert optimistic update on error
-      setCartItemsCount(prev => Math.max(0, prev - 1))
       console.error('Error adding to cart:', error)
       showNotification('Failed to add to cart', 'error')
       return { success: false, error: error instanceof Error ? error.message : 'Failed to add to cart' }
@@ -137,9 +130,6 @@ export const useCart = () => {
     }
 
     try {
-      // Optimistic update
-      setCartItemsCount(prev => Math.max(0, prev - 1))
-      
       const { error } = await supabase
         .from('cart_items')
         .delete()
@@ -153,8 +143,6 @@ export const useCart = () => {
       await fetchCartCount()
       return { success: true }
     } catch (error) {
-      // Revert optimistic update on error
-      setCartItemsCount(prev => prev + 1)
       console.error('Error removing from cart:', error)
       showNotification('Failed to remove from cart', 'error')
       return { success: false, error: error instanceof Error ? error.message : 'Failed to remove from cart' }

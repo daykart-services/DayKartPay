@@ -13,10 +13,12 @@ export interface Product {
   title: string
   description: string
   image_url: string
+  image_urls?: string[]
   price: number
   category: string
   category_id?: string
   is_featured: boolean
+  stock_quantity?: number
   created_at: string
 }
 
@@ -51,6 +53,7 @@ export interface Order {
   products: any[]
   total_amount: number
   status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled'
+  order_status?: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled'
   payment_method?: string
   created_at: string
 }

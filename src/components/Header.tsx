@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ShoppingCart, User, ChevronDown, Menu } from 'lucide-react'
+import { ShoppingCart, User, ChevronDown, Menu, X } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useCart } from '../hooks/useCart'
 
@@ -19,6 +19,19 @@ const Header: React.FC = () => {
     { name: 'BATHWARE', path: '/bathware' },
     { name: 'DORM', path: '/dorm' }
   ]
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showUserDropdown || showMenu) {
+        setShowUserDropdown(false)
+        setShowMenu(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [showUserDropdown, showMenu])
 
   const handleLogout = async () => {
     if (isAdmin) {
@@ -49,9 +62,10 @@ const Header: React.FC = () => {
           {/* Menu Button */}
           <button
             onClick={() => setShowMenu(!showMenu)}
-            className="text-gray-700 hover:text-gray-900 font-medium"
+            className="flex items-center space-x-1 text-gray-700 hover:text-gray-900 font-medium"
           >
-            MENU
+            {showMenu ? <X size={20} /> : <Menu size={20} />}
+            <span>MENU</span>
           </button>
 
           {/* Right side - Cart and User */}
@@ -59,7 +73,7 @@ const Header: React.FC = () => {
             <Link to="/dashboard?tab=cart" className="relative text-gray-700 hover:text-gray-900">
               <ShoppingCart size={24} />
               {cartItemsCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium animate-pulse">
                   {cartItemsCount > 99 ? '99+' : cartItemsCount}
                 </span>
               )}
@@ -129,14 +143,14 @@ const Header: React.FC = () => {
 
         {/* Category Menu */}
         {showMenu && (
-          <div className="border-t border-gray-200 py-4 bg-white">
+          <div className="border-t border-gray-200 py-4 bg-white shadow-lg">
             <nav className="flex justify-center space-x-8">
               {categories.map((category) => (
                 <Link
                   key={category.name}
                   to={category.path}
                   onClick={() => setShowMenu(false)}
-                  className="text-gray-700 hover:text-gray-900 font-medium text-sm tracking-wide"
+                  className="text-gray-700 hover:text-gray-900 font-medium text-sm tracking-wide transition-colors"
                 >
                   {category.name}
                 </Link>

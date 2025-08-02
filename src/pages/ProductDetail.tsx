@@ -15,7 +15,6 @@ const ProductDetail: React.FC = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [loading, setLoading] = useState(true)
   const [addingToCart, setAddingToCart] = useState(false)
-  const [addingToWishlist, setAddingToWishlist] = useState(false)
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const { user } = useAuth()
   const { processPayment, processing } = usePayment()
@@ -25,8 +24,8 @@ const ProductDetail: React.FC = () => {
   // Mock multiple images for demonstration
   const productImages = product ? [
     product.image_url,
-    product.image_url, // In real app, these would be different images
-    product.image_url,
+    // Add more images if available in product.image_urls array
+    ...(product.image_urls || []).slice(0, 4)
   ] : []
 
   useEffect(() => {
@@ -100,40 +99,6 @@ const ProductDetail: React.FC = () => {
       alert('Unable to add item to cart. Please try again.')
     } finally {
       setAddingToCart(false)
-    }
-  }
-
-  const addToWishlist = async () => {
-    if (!user) {
-      alert('Please login to add items to your wishlist')
-      navigate('/auth')
-      return
-    }
-
-    if (!product) return
-
-    setAddingToWishlist(true)
-    try {
-      const { error } = await supabase
-        .from('wishlist_items')
-        .insert([
-          { user_id: user.id, product_id: product.id }
-        ])
-
-      if (error) {
-        if (error.code === '23505') {
-          alert('This item is already in your wishlist!')
-        } else {
-          throw error
-        }
-      } else {
-        alert('Added to wishlist!')
-      }
-    } catch (error) {
-      console.error('Error adding to wishlist:', error)
-      alert('Unable to add item to wishlist. Please try again.')
-    } finally {
-      setAddingToWishlist(false)
     }
   }
 
@@ -389,6 +354,7 @@ const ProductDetail: React.FC = () => {
         </section>
       )}
 
+      <Footer />
       {/* Payment Modal */}
       {showPaymentModal && product && (
         <EnhancedQRGenerator

@@ -15,6 +15,7 @@ const AdminDashboard: React.FC = () => {
   const [productForm, setProductForm] = useState({
     title: '',
     image_url: '',
+    image_urls: [''],
     price: '',
     stock_quantity: '',
     description: '',
@@ -59,6 +60,7 @@ const AdminDashboard: React.FC = () => {
       const productData = {
         title: productForm.title,
         image_url: productForm.image_url,
+        image_urls: productForm.image_urls.filter(url => url.trim() !== ''),
         price: parseFloat(productForm.price),
         stock_quantity: parseInt(productForm.stock_quantity) || 0,
         description: productForm.description,
@@ -84,6 +86,7 @@ const AdminDashboard: React.FC = () => {
       setProductForm({ 
         title: '', 
         image_url: '', 
+        image_urls: [''],
         price: '', 
         stock_quantity: '',
         description: '', 
@@ -138,6 +141,7 @@ const AdminDashboard: React.FC = () => {
     setProductForm({
       title: product.title,
       image_url: product.image_url,
+      image_urls: (product as any).image_urls || [''],
       price: product.price.toString(),
       stock_quantity: (product as any).stock_quantity?.toString() || '0',
       description: product.description,
@@ -211,6 +215,7 @@ const AdminDashboard: React.FC = () => {
                     setProductForm({ 
                       title: '', 
                       image_url: '', 
+                      image_urls: [''],
                       price: '', 
                      stock_quantity: '',
                       description: '', 
@@ -227,24 +232,41 @@ const AdminDashboard: React.FC = () => {
 
               {/* Product Form Modal */}
               {showProductForm && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                  <div className="bg-white rounded-lg p-6 w-full max-w-md">
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                  <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
                     <h3 className="text-lg font-bold mb-4">
                       {editingProduct ? 'Edit Product' : 'Add New Product'}
                     </h3>
                     <form onSubmit={handleProductSubmit} className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
-                        <input
-                          type="text"
-                          value={productForm.title}
-                          onChange={(e) => setProductForm({ ...productForm, title: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
-                          required
-                        />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                          <input
+                            type="text"
+                            value={productForm.title}
+                            onChange={(e) => setProductForm({ ...productForm, title: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                          <select
+                            value={productForm.category}
+                            onChange={(e) => setProductForm({ ...productForm, category: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                          >
+                            <option value="beds">Beds</option>
+                            <option value="stationery">Stationery</option>
+                            <option value="books">Books</option>
+                            <option value="bathware">Bathware</option>
+                            <option value="dorm">Dorm</option>
+                          </select>
+                        </div>
                       </div>
+                      
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Main Image URL</label>
                         <input
                           type="url"
                           value={productForm.image_url}
@@ -253,44 +275,77 @@ const AdminDashboard: React.FC = () => {
                           required
                         />
                       </div>
+                      
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Price (₹)</label>
-                        <input
-                          type="number"
-                          step="0.01"
-                          value={productForm.price}
-                          onChange={(e) => setProductForm({ ...productForm, price: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Stock Quantity</label>
-                        <input
-                          type="number"
-                          min="0"
-                          max="9999"
-                          value={productForm.stock_quantity}
-                          onChange={(e) => setProductForm({ ...productForm, stock_quantity: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
-                          placeholder="0"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                        <select
-                          value={productForm.category}
-                          onChange={(e) => setProductForm({ ...productForm, category: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Additional Images</label>
+                        {productForm.image_urls.map((url, index) => (
+                          <div key={index} className="flex space-x-2 mb-2">
+                            <input
+                              type="url"
+                              value={url}
+                              onChange={(e) => {
+                                const newUrls = [...productForm.image_urls]
+                                newUrls[index] = e.target.value
+                                setProductForm({ ...productForm, image_urls: newUrls })
+                              }}
+                              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                              placeholder={`Additional image ${index + 1} URL`}
+                            />
+                            {index > 0 && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newUrls = productForm.image_urls.filter((_, i) => i !== index)
+                                  setProductForm({ ...productForm, image_urls: newUrls })
+                                }}
+                                className="px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+                              >
+                                Remove
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setProductForm({ 
+                              ...productForm, 
+                              image_urls: [...productForm.image_urls, ''] 
+                            })
+                          }}
+                          className="text-sm text-blue-600 hover:text-blue-700"
                         >
-                          <option value="beds">Beds</option>
-                          <option value="stationery">Stationery</option>
-                          <option value="books">Books</option>
-                          <option value="bathware">Bathware</option>
-                          <option value="dorm">Dorm</option>
-                        </select>
+                          + Add Another Image
+                        </button>
                       </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Price (₹)</label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            value={productForm.price}
+                            onChange={(e) => setProductForm({ ...productForm, price: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Stock Quantity</label>
+                          <input
+                            type="number"
+                            min="0"
+                            max="9999"
+                            value={productForm.stock_quantity}
+                            onChange={(e) => setProductForm({ ...productForm, stock_quantity: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                            placeholder="0"
+                            required
+                          />
+                        </div>
+                      </div>
+                      
                       <div>
                         <label className="flex items-center space-x-2">
                           <input
@@ -302,6 +357,7 @@ const AdminDashboard: React.FC = () => {
                           <span className="text-sm font-medium text-gray-700">Featured Product</span>
                         </label>
                       </div>
+                      
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
                         <textarea
@@ -312,6 +368,7 @@ const AdminDashboard: React.FC = () => {
                           required
                         />
                       </div>
+                      
                       <div className="flex space-x-3">
                         <button
                           type="submit"
@@ -400,9 +457,9 @@ const AdminDashboard: React.FC = () => {
                         <div>
                           <h3 className="font-medium text-lg">Order #{order.id.slice(0, 8)}</h3>
                           <p className="text-gray-600">User ID: {order.user_id}</p>
-                          <p className="text-gray-600">Status: <span className="capitalize">{order.status}</span></p>
+                          <p className="text-gray-600">Status: <span className="capitalize">{order.order_status || order.status}</span></p>
                           <p className="text-gray-600">Date: {new Date(order.created_at).toLocaleDateString()}</p>
-                          <p className="text-gray-600">Products: {order.product_ids.length} items</p>
+                          <p className="text-gray-600">Products: {Array.isArray(order.products) ? order.products.length : 0} items</p>
                         </div>
                         <div className="text-right">
                           <p className="text-2xl font-bold text-green-600">₹{order.total_amount}</p>

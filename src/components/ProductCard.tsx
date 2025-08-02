@@ -1,11 +1,10 @@
 import React from 'react'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Heart, ShoppingCart, ShoppingBag } from 'lucide-react'
+import { ShoppingCart, ShoppingBag } from 'lucide-react'
 import type { Product } from '../types'
 import { useAuth } from '../contexts/AuthContext'
 import { useCart } from '../hooks/useCart'
-import { supabase } from '../lib/supabase'
 
 interface ProductCardProps {
   product: Product
@@ -47,37 +46,6 @@ const ProductCard: React.FC<ProductCardProps> = ({
     }
   }
 
-  const addToWishlist = async (e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    
-    if (!user) {
-      alert('Please login to add items to your wishlist')
-      return
-    }
-
-    try {
-      const { error } = await supabase
-        .from('wishlist_items')
-        .insert([
-          { user_id: user.id, product_id: product.id }
-        ])
-
-      if (error) {
-        if (error.code === '23505') {
-          alert('This item is already in your wishlist!')
-        } else {
-          throw error
-        }
-      } else {
-        alert('Added to wishlist!')
-      }
-    } catch (error) {
-      console.error('Error adding to wishlist:', error)
-      alert('Unable to add item to wishlist. Please try again.')
-    }
-  }
-
   const buyNow = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
@@ -103,13 +71,6 @@ const ProductCard: React.FC<ProductCardProps> = ({
               >
                 <ShoppingCart size={20} className="text-gray-600" />
               </button>
-              <button
-                onClick={buyNow}
-                className="p-2 bg-black text-white rounded-full shadow-md hover:bg-gray-800 transition-colors"
-                title="Buy Now"
-              >
-                <ShoppingBag size={20} />
-              </button>
             </div>
           )}
         </div>
@@ -125,12 +86,15 @@ const ProductCard: React.FC<ProductCardProps> = ({
             <span className="text-2xl font-bold text-gray-900">
               ₹{product.price}
             </span>
-            <button
-              onClick={buyNow}
-              className="px-4 py-2 bg-black text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors"
-            >
-              Buy Now
-            </button>
+            <div className="flex space-x-2">
+              <button
+                onClick={buyNow}
+                className="px-3 py-2 bg-black text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors flex items-center space-x-1"
+              >
+                <ShoppingBag size={16} />
+                <span>Buy Now</span>
+              </button>
+            </div>
           </div>
         </div>
       </Link>

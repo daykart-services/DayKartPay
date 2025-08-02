@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { ShoppingCart, Heart, Package, User, Gift } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase, CartItem, WishlistItem, Order } from '../lib/supabase'
@@ -9,7 +9,9 @@ import EnhancedQRGenerator from '../components/EnhancedQRGenerator'
 import ReferralSystem from '../components/ReferralSystem'
 
 const Dashboard: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'profile' | 'cart' | 'liked' | 'orders' | 'referrals'>('profile')
+  const [searchParams] = useSearchParams()
+  const initialTab = (searchParams.get('tab') as 'profile' | 'cart' | 'liked' | 'orders' | 'referrals') || 'profile'
+  const [activeTab, setActiveTab] = useState<'profile' | 'cart' | 'liked' | 'orders' | 'referrals'>(initialTab)
   const [cartItems, setCartItems] = useState<CartItem[]>([])
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([])
   const [orders, setOrders] = useState<Order[]>([])
@@ -26,6 +28,14 @@ const Dashboard: React.FC = () => {
   const { user } = useAuth()
   const { processPayment, processing } = usePayment()
   const { removeFromCart: removeCartItem } = useCart()
+
+  useEffect(() => {
+    // Update tab from URL params
+    const tab = searchParams.get('tab') as 'profile' | 'cart' | 'liked' | 'orders' | 'referrals'
+    if (tab && ['profile', 'cart', 'liked', 'orders', 'referrals'].includes(tab)) {
+      setActiveTab(tab)
+    }
+  }, [searchParams])
 
   useEffect(() => {
     if (user) {
@@ -478,12 +488,13 @@ const Dashboard: React.FC = () => {
                           <h3 className="text-lg font-semibold text-gray-900">Order #{order.id.slice(0, 8)}</h3>
                           <p className="text-gray-600 mt-1">
                             <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
-                              order.status === 'completed' ? 'bg-green-100 text-green-800' :
-                              order.status === 'processing' ? 'bg-blue-100 text-blue-800' :
-                              order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                              order.order_status === 'delivered' ? 'bg-green-100 text-green-800' :
+                              order.order_status === 'shipped' ? 'bg-blue-100 text-blue-800' :
+                              order.order_status === 'processing' ? 'bg-yellow-100 text-yellow-800' :
+                              order.order_status === 'pending' ? 'bg-gray-100 text-gray-800' :
                               'bg-gray-100 text-gray-800'
                             }`}>
-                              {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                              {(order.order_status || order.status || 'pending').charAt(0).toUpperCase() + (order.order_status || order.status || 'pending').slice(1)}
                             </span>
                           </p>
                           <p className="text-gray-600 mt-2">
@@ -501,7 +512,7 @@ const Dashboard: React.FC = () => {
                       </div>
                       
                       {/* Order Items */}
-                      {order.products && order.products.length > 0 && (
+                      {order.products && Array.isArray(order.products) && order.products.length > 0 && (
                         <div className="border-t pt-4">
                           <h4 className="font-medium text-gray-900 mb-3">Items ({order.products.length})</h4>
                           <div className="space-y-2">

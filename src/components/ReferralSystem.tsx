@@ -318,6 +318,46 @@ const ReferralSystem: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Redeem Rewards Section */}
+      <div className="bg-white border border-gray-200 rounded-lg p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Redeem Your Rewards</h3>
+        
+        <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg mb-4">
+          <div>
+            <p className="text-green-800 font-medium">Available Balance</p>
+            <p className="text-2xl font-bold text-green-900">₹{referralData.totalRewards}</p>
+          </div>
+          <Gift className="w-8 h-8 text-green-600" />
+        </div>
+
+        {referralData.totalRewards > 0 ? (
+          <button
+            onClick={() => {
+              // In a real app, this would create a redemption request
+              alert(`Redemption request submitted for ₹${referralData.totalRewards}. You will be contacted within 24-48 hours.`)
+            }}
+            className="w-full py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors"
+          >
+            Request to Redeem Rewards (₹{referralData.totalRewards})
+          </button>
+        ) : (
+          <div className="text-center py-4">
+            <p className="text-gray-600">No rewards available for redemption yet.</p>
+            <p className="text-sm text-gray-500 mt-1">Start referring friends to earn rewards!</p>
+          </div>
+        )}
+        
+        <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+          <h4 className="text-sm font-semibold text-blue-800 mb-2">Redemption Process</h4>
+          <ul className="text-xs text-blue-700 space-y-1">
+            <li>• Minimum redemption amount: ₹100</li>
+            <li>• Processing time: 24-48 hours</li>
+            <li>• Payment via UPI or bank transfer</li>
+            <li>• You'll receive a confirmation email</li>
+          </ul>
+        </div>
+      </div>
     </div>
   )
 }
