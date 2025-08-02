@@ -385,4 +385,4 @@ const ReferralSystem: React.FC = () => {
   )
 }
 
-export default ReferralSystem
+export { ReferralSystem }
