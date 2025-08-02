@@ -1,7 +1,7 @@
 import React from 'react'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ShoppingCart, ShoppingBag } from 'lucide-react'
+import { ShoppingCart, ShoppingBag, Eye } from 'lucide-react'
 import type { Product } from '../types'
 import { useAuth } from '../contexts/AuthContext'
 import { useCart } from '../hooks/useCart'
@@ -49,7 +49,15 @@ const ProductCard: React.FC<ProductCardProps> = ({
   const buyNow = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    navigate(`/product/${product.id}`)
+    
+    if (!user) {
+      alert('Please login to make a purchase')
+      navigate('/auth')
+      return
+    }
+    
+    // Navigate to product detail page with buy now intent
+    navigate(`/product/${product.id}?action=buy`)
   }
 
   return (
@@ -73,7 +81,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
               </button>
               <button
                 onClick={buyNow}
-                className="p-2 bg-black text-white rounded-full shadow-md hover:bg-gray-800 transition-colors"
+                className="p-2 bg-green-600 text-white rounded-full shadow-md hover:bg-green-700 transition-colors"
                 title="Buy Now"
               >
                 <ShoppingBag size={20} />
@@ -97,13 +105,13 @@ const ProductCard: React.FC<ProductCardProps> = ({
               <button
                 onClick={handleAddToCart}
                 disabled={isAddingToCart}
-                className="px-3 py-1 bg-gray-100 text-gray-700 text-sm font-medium rounded hover:bg-gray-200 transition-colors disabled:opacity-50"
+                className="px-3 py-1 bg-blue-100 text-blue-700 text-sm font-medium rounded hover:bg-blue-200 transition-colors disabled:opacity-50"
               >
                 {isAddingToCart ? 'Adding...' : 'Add to Cart'}
               </button>
               <button
                 onClick={buyNow}
-                className="px-3 py-1 bg-black text-white text-sm font-medium rounded hover:bg-gray-800 transition-colors"
+                className="px-3 py-1 bg-green-600 text-white text-sm font-medium rounded hover:bg-green-700 transition-colors"
               >
                 Buy Now
               </button>

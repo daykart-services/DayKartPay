@@ -40,7 +40,7 @@ const Footer: React.FC = () => {
                 <li><Link to="/privacy" className="hover:text-gray-900">Privacy Policy</Link></li>
                 <li><Link to="/shipping" className="hover:text-gray-900">Shipping Policy</Link></li>
                 <li><Link to="/contact" className="hover:text-gray-900">Contact Us</Link></li>
-                <li><Link to="/admin-login" className="hover:text-gray-900 text-xs text-blue-600">Admin Login</Link></li>
+                <li><Link to="/admin-login" className="hover:text-gray-900 text-xs text-gray-500">Admin Portal</Link></li>
               </ul>
             </div>
           </div>

@@ -427,7 +427,7 @@ const Dashboard: React.FC = () => {
                         onClick={handleCheckout}
                         disabled={processing}
                         className="px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
+                      className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
                         {processing ? 'Processing...' : 'Checkout'}
                       </button>
                     </div>
@@ -447,41 +447,17 @@ const Dashboard: React.FC = () => {
 
           {activeTab === 'liked' && (
             <div className="p-8">
-              {wishlistItems.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {wishlistItems.map((item) => (
-                    <div key={item.id} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
-                      <img
-                        src={item.products?.image_url || 'https://images.pexels.com/photos/1034596/pexels-photo-1034596.jpeg?auto=compress&cs=tinysrgb&w=400'}
-                        alt={item.products?.title || 'Product'}
-                        className="w-full h-48 object-cover rounded mb-4"
-                      />
-                      <h3 className="font-medium mb-2">{item.products?.title || 'Unknown Product'}</h3>
-                      <p className="text-lg font-semibold mb-4">₹{item.products?.price || 0}</p>
-                      <div className="space-y-2">
-                        <Link
-                          to={`/product/${item.product_id}`}
-                          className="block w-full py-2 bg-black text-white text-center rounded hover:bg-gray-800 transition-colors"
-                        >
-                          View Product
-                        </Link>
-                        <button
-                          onClick={() => removeFromWishlist(item.id)}
-                          className="w-full py-2 text-red-600 border border-red-600 rounded hover:bg-red-50 transition-colors"
-                        >
-                          Remove from Wishlist
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <Heart size={64} className="mx-auto text-gray-400 mb-4" />
-                  <h3 className="text-xl font-medium text-gray-900 mb-2">No liked items</h3>
-                  <p className="text-gray-600">Add products to your wishlist to see them here!</p>
-                </div>
-              )}
+              <div className="text-center py-12">
+                <Heart size={64} className="mx-auto text-gray-400 mb-4" />
+                <h3 className="text-xl font-medium text-gray-900 mb-2">Quick Purchase</h3>
+                <p className="text-gray-600 mb-6">Browse products and use "Buy Now" for instant checkout!</p>
+                <Link
+                  to="/products"
+                  className="inline-block px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  Browse Products
+                </Link>
+              </div>
             </div>
           )}
 
@@ -512,6 +488,7 @@ const Dashboard: React.FC = () => {
                             })}
                           </p>
                         </div>
+                          <p className="text-gray-600">Payment: {order.payment_method || 'PhonePe'}</p>
                         <div className="text-right">
                           <p className="text-2xl font-bold text-gray-900">₹{order.total_amount}</p>
                           <p className="text-sm text-gray-500">Total Amount</p>
@@ -549,7 +526,7 @@ const Dashboard: React.FC = () => {
                   <p className="text-gray-600">Your order history will appear here!</p>
                   <Link
                     to="/products"
-                    className="inline-block mt-4 px-6 py-3 bg-black text-white font-semibold rounded-lg hover:bg-gray-800 transition-colors"
+                    className="inline-block mt-4 px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors"
                   >
                     Start Shopping
                   </Link>

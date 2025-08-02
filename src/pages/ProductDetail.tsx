@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom'
 import { ShoppingCart, ArrowLeft, ChevronLeft, ChevronRight, Star } from 'lucide-react'
 import { supabase, Product, type Product as ProductType } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
@@ -9,6 +9,7 @@ import EnhancedQRGenerator from '../components/EnhancedQRGenerator'
 
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>()
+  const [searchParams] = useSearchParams()
   const [product, setProduct] = useState<Product | null>(null)
   const [relatedProducts, setRelatedProducts] = useState<ProductType[]>([])
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
@@ -19,6 +20,9 @@ const ProductDetail: React.FC = () => {
   const { processPayment, processing } = usePayment()
   const { addToCart: addToCartHook } = useCart()
   const navigate = useNavigate()
+
+  // Check if user came here via "Buy Now"
+  const isBuyNowAction = searchParams.get('action') === 'buy'
 
   // Mock multiple images for demonstration
   const productImages = product ? [
@@ -41,6 +45,13 @@ const ProductDetail: React.FC = () => {
       fetchRelatedProducts()
     }
   }, [id])
+
+  // Auto-trigger buy now if coming from product card
+  useEffect(() => {
+    if (product && isBuyNowAction && user) {
+      setShowPaymentModal(true)
+    }
+  }, [product, isBuyNowAction, user])
 
   const fetchProduct = async () => {
     if (!id) return
@@ -283,7 +294,7 @@ const ProductDetail: React.FC = () => {
                 <button
                   onClick={buyNow}
                   disabled={processing}
-                  className="flex-1 flex items-center justify-center space-x-2 px-8 py-4 bg-black text-white font-semibold rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50"
+                  className="flex-1 flex items-center justify-center space-x-2 px-8 py-4 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
                 >
                   <ShoppingCart size={20} />
                   <span>{processing ? 'Processing...' : 'Buy Now'}</span>
@@ -292,7 +303,7 @@ const ProductDetail: React.FC = () => {
                 <button
                   onClick={addToCart}
                   disabled={addingToCart}
-                  className="flex-1 flex items-center justify-center space-x-2 px-8 py-4 border-2 border-black text-black font-semibold rounded-lg hover:bg-black hover:text-white transition-colors disabled:opacity-50"
+                  className="flex-1 flex items-center justify-center space-x-2 px-8 py-4 border-2 border-blue-600 text-blue-600 font-semibold rounded-lg hover:bg-blue-600 hover:text-white transition-colors disabled:opacity-50"
                 >
                   <ShoppingCart size={20} />
                   <span>{addingToCart ? 'Adding...' : 'Add to Cart'}</span>

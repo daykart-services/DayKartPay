@@ -7,6 +7,7 @@ const Auth: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [referralCode, setReferralCode] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -31,11 +32,18 @@ const Auth: React.FC = () => {
       if (isLogin) {
         const { error } = await signIn(email, password)
         if (error) throw error
-        navigate('/', { replace: true })
+        navigate('/')
       } else {
         const { error } = await signUp(email, password)
         if (error) throw error
-        navigate('/', { replace: true })
+        
+        // Handle referral code if provided
+        if (referralCode.trim()) {
+          // Store referral code for processing (you can implement this logic)
+          localStorage.setItem('signup_referral_code', referralCode.trim())
+        }
+        
+        navigate('/')
       }
     } catch (error: any) {
       setError(error.message || 'An error occurred during authentication')
@@ -53,6 +61,9 @@ const Auth: React.FC = () => {
         <h2 className="text-center text-3xl font-extrabold text-gray-900">
           {isLogin ? 'Sign in to your account' : 'Create your account'}
         </h2>
+        <p className="mt-2 text-center text-sm text-gray-600">
+          {isLogin ? 'Welcome back to DayKart' : 'Join DayKart today'}
+        </p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
@@ -104,6 +115,28 @@ const Auth: React.FC = () => {
                 </button>
               </div>
             </div>
+
+            {!isLogin && (
+              <div>
+                <label htmlFor="referralCode" className="block text-sm font-medium text-gray-700">
+                  Referral Code (Optional)
+                </label>
+                <div className="mt-1">
+                  <input
+                    id="referralCode"
+                    name="referralCode"
+                    type="text"
+                    value={referralCode}
+                    onChange={(e) => setReferralCode(e.target.value)}
+                    placeholder="Enter referral code"
+                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <p className="mt-1 text-xs text-gray-500">
+                  Have a referral code? Enter it to earn rewards!
+                </p>
+              </div>
+            )}
 
             {isLogin && (
               <div className="flex items-center justify-between">

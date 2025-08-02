@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ShoppingCart, User, ChevronDown, Menu, X } from 'lucide-react'
+import { ShoppingCart, User, ChevronDown, Menu, X, Settings } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useCart } from '../hooks/useCart'
 
@@ -69,6 +69,22 @@ const Header: React.FC = () => {
               <span>MENU</span>
               {showMenu ? <X size={16} /> : <Menu size={16} />}
             </button>
+            
+            {/* Dropdown Menu */}
+            {showMenu && (
+              <div className="absolute top-full left-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                {categories.map((category) => (
+                  <Link
+                    key={category.name}
+                    to={category.path}
+                    onClick={() => setShowMenu(false)}
+                    className="block px-4 py-2 text-gray-700 hover:bg-gray-50 hover:text-gray-900 font-medium text-sm tracking-wide transition-colors"
+                  >
+                    {category.name}
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Right side - Cart and User */}
@@ -143,24 +159,6 @@ const Header: React.FC = () => {
             )}
           </div>
         </div>
-
-        {/* Category Menu */}
-        {showMenu && (
-          <div className="border-t border-gray-200 py-4 bg-white shadow-lg">
-            <nav className="flex justify-center space-x-8">
-              {categories.map((category) => (
-                <Link
-                  key={category.name}
-                  to={category.path}
-                  onClick={() => setShowMenu(false)}
-                  className="text-gray-700 hover:text-gray-900 font-medium text-sm tracking-wide transition-colors"
-                >
-                  {category.name}
-                </Link>
-              ))}
-            </nav>
-          </div>
-        )}
       </div>
     </header>
   )

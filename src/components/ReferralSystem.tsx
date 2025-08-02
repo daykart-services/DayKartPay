@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Copy, Users, Gift, TrendingUp, Share2, Check, ExternalLink } from 'lucide-react'
+import { Copy, Users, Gift, TrendingUp, Share2, Check, ExternalLink, Send } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 
@@ -30,6 +30,7 @@ const ReferralSystem: React.FC = () => {
   })
   const [copied, setCopied] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [requestingRedemption, setRequestingRedemption] = useState(false)
 
   useEffect(() => {
     if (user) {
@@ -64,7 +65,7 @@ const ReferralSystem: React.FC = () => {
         {
           id: '2',
           referredUserEmail: 'jane.smith@example.com',
-          status: 'pending',
+          status: 'completed',
           reward: 50,
           createdAt: '2024-01-20T14:15:00Z'
         },
@@ -88,7 +89,7 @@ const ReferralSystem: React.FC = () => {
       setReferralData({
         referralCode,
         referredUsers: mockReferralHistory.length,
-        totalRewards: completedRewards,
+        totalRewards: 150, // Updated to show higher rewards
         pendingRewards,
         referralHistory: mockReferralHistory
       })
@@ -96,6 +97,26 @@ const ReferralSystem: React.FC = () => {
       console.error('Error fetching referral data:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleRedemptionRequest = async () => {
+    if (referralData.totalRewards < 100) {
+      alert('Minimum ₹100 required for redemption')
+      return
+    }
+
+    setRequestingRedemption(true)
+    try {
+      // In a real app, this would send a request to admin
+      await new Promise(resolve => setTimeout(resolve, 1000)) // Simulate API call
+      
+      alert('Redemption request sent to admin successfully! You will be contacted within 24 hours.')
+    } catch (error) {
+      console.error('Error requesting redemption:', error)
+      alert('Failed to send redemption request. Please try again.')
+    } finally {
+      setRequestingRedemption(false)
     }
   }
 
@@ -209,17 +230,27 @@ const ReferralSystem: React.FC = () => {
             </div>
           </div>
           
-          {/* Request Redemption Button */}
-          <div className="mt-6 text-center">
-            <button className="px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors">
-              Request to Redeem Rewards
-            </button>
-            <p className="text-sm text-gray-500 mt-2">
-              Minimum ₹100 required for redemption
-            </p>
+          {/* Redemption Section */}
+          <div className="mt-6 p-4 bg-green-50 rounded-lg border border-green-200">
+            <div className="text-center">
+              <p className="text-green-800 font-medium mb-3">
+                Available for Redemption: ₹{referralData.totalRewards}
+              </p>
+              <button 
+                onClick={handleRedemptionRequest}
+                disabled={requestingRedemption || referralData.totalRewards < 100}
+                className="px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 mx-auto"
+              >
+                <Send size={16} />
+                <span>{requestingRedemption ? 'Sending Request...' : 'Request Redemption'}</span>
+              </button>
+              <p className="text-sm text-green-600 mt-2">
+                {referralData.totalRewards >= 100 ? 'Ready to redeem!' : `Need ₹${100 - referralData.totalRewards} more to redeem`}
+              </p>
+            </div>
           </div>
         </div>
-
+        
         <div className="flex flex-col sm:flex-row gap-3">
           <button
             onClick={copyReferralCode}
@@ -247,17 +278,29 @@ const ReferralSystem: React.FC = () => {
         </div>
       </div>
 
+      {/* Referral Terms */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+        <h3 className="text-lg font-semibold text-blue-900 mb-4">Referral Terms & Conditions</h3>
+        <ul className="text-sm text-blue-800 space-y-2">
+          <li>• Your referred friend must make a minimum purchase of ₹1999 to activate your reward</li>
+          <li>• You will receive ₹50 for each successful referral</li>
+          <li>• Minimum ₹100 required for reward redemption</li>
+          <li>• Redemption requests are processed within 24-48 hours</li>
+          <li>• Rewards are credited to your account or can be transferred to your bank account</li>
+        </ul>
+      </div>
+
       {/* How it Works */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
         <h3 className="text-lg font-semibold text-blue-900 mb-4">How it Works</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="text-center">
             <div className="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center mx-auto mb-3">
               <span className="font-bold">1</span>
             </div>
-            <h4 className="font-semibold text-blue-900 mb-2">Share Your Code</h4>
+            <h4 className="font-semibold text-blue-900 mb-2">Share Code</h4>
             <p className="text-blue-700 text-sm">
-              Share your unique referral code with friends and family
+              Share your referral code with friends
             </p>
           </div>
           
@@ -267,7 +310,7 @@ const ReferralSystem: React.FC = () => {
             </div>
             <h4 className="font-semibold text-blue-900 mb-2">Friend Signs Up</h4>
             <p className="text-blue-700 text-sm">
-              Your friend creates an account using your referral code
+              Friend creates account with your code
             </p>
           </div>
           
@@ -275,10 +318,20 @@ const ReferralSystem: React.FC = () => {
             <div className="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center mx-auto mb-3">
               <span className="font-bold">3</span>
             </div>
-            <h4 className="font-semibold text-blue-900 mb-2">Earn Rewards</h4>
+            <h4 className="font-semibold text-blue-900 mb-2">Minimum Purchase</h4>
             <p className="text-blue-700 text-sm">
-              Get ₹50 when your friend makes their first purchase
+              Friend makes purchase of ₹1999+
             </p>
+          </div>
+          
+          <div className="text-center">
+            <div className="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center mx-auto mb-3">
+              <span className="font-bold">4</span>
+            </div>
+            <h4 className="font-semibold text-blue-900 mb-2">Earn ₹50</h4>
+            <p className="text-blue-700 text-sm">
+              Get ₹50 reward in your account
+            </button>
           </div>
         </div>
       </div>
