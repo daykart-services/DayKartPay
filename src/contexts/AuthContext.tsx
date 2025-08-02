@@ -44,6 +44,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
+      
+      // If session is null/invalid, clear admin state as well
+      if (!session?.user) {
+        setIsAdmin(false)
+        localStorage.removeItem('admin_session')
+      } else {
+        // Re-check admin session when user is authenticated
+        const adminSession = localStorage.getItem('admin_session')
+        if (adminSession === 'true') {
+          setIsAdmin(true)
+        }
+      }
+      
       setLoading(false)
     })
 
@@ -93,6 +106,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signOut = async () => {
     await supabase.auth.signOut()
     setUser(null)
+    adminLogout()
   }
 
   const adminLogin = (email: string, password: string) => {
