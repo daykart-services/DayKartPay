@@ -85,8 +85,10 @@ const CategoryPage: React.FC = () => {
     )
   }
 
-      title={getCategoryTitle(category)} 
-      description={getCategoryDescription(category)}
+  return (
+    <CategoryLayout 
+      title={getCategoryTitle()} 
+      description={getCategoryDescription()}
     >
       <ProductGrid category={category} />
     </CategoryLayout>
