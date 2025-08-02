@@ -52,20 +52,8 @@ const Home: React.FC = () => {
 
       <FeaturedProducts />
 
-      {/* Video Section - Only on Home Page */}
+      {/* Video Section */}
       <VideoSection />
-
-      {/* Admin Login Button */}
-      <section className="py-8 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <Link
-            to="/admin-login"
-            className="inline-block px-6 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors"
-          >
-            Admin Portal
-          </Link>
-        </div>
-      </section>
 
       <Footer />
     </div>

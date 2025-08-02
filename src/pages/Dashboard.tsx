@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { ShoppingCart, Heart, Package, User, Gift } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase, CartItem, WishlistItem, Order } from '../lib/supabase'
@@ -9,7 +9,9 @@ import EnhancedQRGenerator from '../components/EnhancedQRGenerator'
 import ReferralSystem from '../components/ReferralSystem'
 
 const Dashboard: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'profile' | 'cart' | 'liked' | 'orders' | 'referrals'>('profile')
+  const [searchParams] = useSearchParams()
+  const initialTab = (searchParams.get('tab') as 'profile' | 'cart' | 'liked' | 'orders' | 'referrals') || 'profile'
+  const [activeTab, setActiveTab] = useState<'profile' | 'cart' | 'liked' | 'orders' | 'referrals'>(initialTab)
   const [cartItems, setCartItems] = useState<CartItem[]>([])
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([])
   const [orders, setOrders] = useState<Order[]>([])
@@ -26,6 +28,14 @@ const Dashboard: React.FC = () => {
   const { user } = useAuth()
   const { processPayment, processing } = usePayment()
   const { removeFromCart: removeCartItem } = useCart()
+
+  // Update tab based on URL parameter
+  useEffect(() => {
+    const tab = searchParams.get('tab') as 'profile' | 'cart' | 'liked' | 'orders' | 'referrals'
+    if (tab) {
+      setActiveTab(tab)
+    }
+  }, [searchParams])
 
   useEffect(() => {
     if (user) {
@@ -440,7 +450,7 @@ const Dashboard: React.FC = () => {
               {wishlistItems.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {wishlistItems.map((item) => (
-                    <div key={item.id} className="border border-gray-200 rounded-lg p-4">
+                    <div key={item.id} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
                       <img
                         src={item.products?.image_url || 'https://images.pexels.com/photos/1034596/pexels-photo-1034596.jpeg?auto=compress&cs=tinysrgb&w=400'}
                         alt={item.products?.title || 'Product'}
@@ -448,12 +458,20 @@ const Dashboard: React.FC = () => {
                       />
                       <h3 className="font-medium mb-2">{item.products?.title || 'Unknown Product'}</h3>
                       <p className="text-lg font-semibold mb-4">₹{item.products?.price || 0}</p>
-                      <button
-                        onClick={() => removeFromWishlist(item.id)}
-                        className="w-full py-2 text-red-600 border border-red-600 rounded hover:bg-red-50"
-                      >
-                        Remove from Wishlist
-                      </button>
+                      <div className="space-y-2">
+                        <Link
+                          to={`/product/${item.product_id}`}
+                          className="block w-full py-2 bg-black text-white text-center rounded hover:bg-gray-800 transition-colors"
+                        >
+                          View Product
+                        </Link>
+                        <button
+                          onClick={() => removeFromWishlist(item.id)}
+                          className="w-full py-2 text-red-600 border border-red-600 rounded hover:bg-red-50 transition-colors"
+                        >
+                          Remove from Wishlist
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -472,7 +490,7 @@ const Dashboard: React.FC = () => {
               {orders.length > 0 ? (
                 <div className="space-y-6">
                   {orders.map((order) => (
-                    <div key={order.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+                    <div key={order.id} className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow">
                       <div className="flex justify-between items-start mb-4">
                         <div>
                           <h3 className="text-lg font-semibold text-gray-900">Order #{order.id.slice(0, 8)}</h3>
@@ -506,20 +524,36 @@ const Dashboard: React.FC = () => {
                           <h4 className="font-medium text-gray-900 mb-3">Items ({order.products.length})</h4>
                           <div className="space-y-2">
                             {order.products.slice(0, 3).map((item: any, index: number) => (
-                              <div key={index} className="flex justify-between items-center text-sm">
-                                <span className="text-gray-700">{item.title || `Item ${index + 1}`}</span>
-                                <span className="text-gray-600">
+                              <div key={index} className="flex justify-between items-center text-sm p-2 bg-gray-50 rounded">
+                                <span className="font-medium text-gray-900">{item.title || `Item ${index + 1}`}</span>
+                                <span className="text-gray-700 font-semibold">
                                   {item.quantity ? `${item.quantity}x ` : ''}₹{item.price || 0}
                                 </span>
                               </div>
-                            ))}
-                            {order.products.length > 3 && (
-                              <p className="text-sm text-gray-500">
-                                +{order.products.length - 3} more items
-                              </p>
-                            )}
+                            className="w-20 h-20 object-cover rounded-lg"
+                          <div className="flex flex-col space-y-2">
+                            <Link
+                              to={`/product/${item.product_id}`}
+                              className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors text-center"
+                            >
+                    <div className="mt-6 pt-6 border-t bg-gray-50 p-4 rounded-lg">
+                      <div className="flex justify-between items-center mb-4">
+                        <span className="text-xl font-bold text-gray-900">Total: ₹{getTotalCartValue()}</span>
+                      </div>
+                      <div className="flex space-x-4">
+                              onClick={() => removeFromCart(item.id)}
+                              className="px-3 py-1 text-sm text-red-600 hover:text-red-700 border border-red-200 rounded hover:bg-red-50 transition-colors"
+                                +{order.products.length - 3} more item{order.products.length - 3 > 1 ? 's' : ''}
+                          className="flex-1 px-6 py-3 bg-black text-white font-semibold rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            </button>
                           </div>
                         </div>
+                        <Link
+                          to="/products"
+                          className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors text-center"
+                        >
+                          Continue Shopping
+                        </Link>
                       )}
                     </div>
                   ))}
@@ -531,7 +565,7 @@ const Dashboard: React.FC = () => {
                   <p className="text-gray-600">Your order history will appear here!</p>
                   <Link
                     to="/products"
-                    className="inline-block mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    className="inline-block mt-4 px-6 py-3 bg-black text-white font-semibold rounded-lg hover:bg-gray-800 transition-colors"
                   >
                     Start Shopping
                   </Link>

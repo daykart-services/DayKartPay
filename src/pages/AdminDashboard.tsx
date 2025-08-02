@@ -245,13 +245,19 @@ const AdminDashboard: React.FC = () => {
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
-                        <input
-                          type="url"
-                          value={productForm.image_url}
-                          onChange={(e) => setProductForm({ ...productForm, image_url: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
-                          required
-                        />
+                        <div className="space-y-2">
+                          <input
+                            type="url"
+                            value={productForm.image_url}
+                            onChange={(e) => setProductForm({ ...productForm, image_url: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                            placeholder="https://example.com/image.jpg"
+                            required
+                          />
+                          <p className="text-xs text-gray-500">
+                            Tip: Use high-quality images (800x800px recommended)
+                          </p>
+                        </div>
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Price (₹)</label>
@@ -266,16 +272,21 @@ const AdminDashboard: React.FC = () => {
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Stock Quantity</label>
-                        <input
-                          type="number"
-                          min="0"
-                          max="9999"
-                          value={productForm.stock_quantity}
-                          onChange={(e) => setProductForm({ ...productForm, stock_quantity: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
-                          placeholder="0"
-                          required
-                        />
+                        <div className="space-y-2">
+                          <input
+                            type="number"
+                            min="0"
+                            max="9999"
+                            value={productForm.stock_quantity}
+                            onChange={(e) => setProductForm({ ...productForm, stock_quantity: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                            placeholder="Enter available quantity"
+                            required
+                          />
+                          <p className="text-xs text-gray-500">
+                            Set to 0 for out of stock
+                          </p>
+                        </div>
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
@@ -356,9 +367,18 @@ const AdminDashboard: React.FC = () => {
                       <p className="text-gray-600 text-sm mb-2 line-clamp-2">{product.description}</p>
                       <p className="text-lg font-semibold mb-2">₹{product.price}</p>
                       <p className="text-sm text-gray-500 mb-4 capitalize">{product.category}</p>
-                      <p className="text-sm text-gray-600 mb-4">
+                      <div className="flex items-center justify-between mb-4">
+                        <p className="text-sm text-gray-600">
                         Stock: {(product as any).stock_quantity || 0} units
-                      </p>
+                        </p>
+                        <span className={`px-2 py-1 text-xs rounded-full ${
+                          ((product as any).stock_quantity || 0) > 0 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-red-100 text-red-800'
+                        }`}>
+                          {((product as any).stock_quantity || 0) > 0 ? 'In Stock' : 'Out of Stock'}
+                        </span>
+                      </div>
                       <div className="flex space-x-2">
                         <button
                           onClick={() => startEdit(product)}
@@ -399,13 +419,20 @@ const AdminDashboard: React.FC = () => {
                       <div className="flex justify-between items-start">
                         <div>
                           <h3 className="font-medium text-lg">Order #{order.id.slice(0, 8)}</h3>
-                          <p className="text-gray-600">User ID: {order.user_id}</p>
+                          <p className="text-gray-600">User: {order.user_id.slice(0, 8)}...</p>
                           <p className="text-gray-600">Status: <span className="capitalize">{order.status}</span></p>
-                          <p className="text-gray-600">Date: {new Date(order.created_at).toLocaleDateString()}</p>
-                          <p className="text-gray-600">Products: {order.product_ids.length} items</p>
+                          <p className="text-gray-600">Date: {new Date(order.created_at).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}</p>
+                          <p className="text-gray-600">Items: {Array.isArray(order.products) ? order.products.length : 0}</p>
                         </div>
                         <div className="text-right">
-                          <p className="text-2xl font-bold text-green-600">₹{order.total_amount}</p>
+                          <p className="text-2xl font-bold text-green-600">₹{order.total_amount.toFixed(2)}</p>
+                          <p className="text-sm text-gray-500">Total Amount</p>
                           <button
                             onClick={() => deleteOrder(order.id)}
                             className="mt-2 flex items-center space-x-1 px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"

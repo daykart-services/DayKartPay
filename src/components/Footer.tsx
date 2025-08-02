@@ -4,7 +4,7 @@ import { Facebook, Instagram, Youtube, Twitter } from 'lucide-react'
 
 const Footer: React.FC = () => {
   return (
-    <footer className="bg-white border-t border-gray-200">
+    <footer className="bg-white border-t border-gray-200 mt-auto">
       {/* Main Footer Content */}
       <div className="py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -40,6 +40,7 @@ const Footer: React.FC = () => {
                 <li><Link to="/privacy" className="hover:text-gray-900">Privacy Policy</Link></li>
                 <li><Link to="/shipping" className="hover:text-gray-900">Shipping Policy</Link></li>
                 <li><Link to="/contact" className="hover:text-gray-900">Contact Us</Link></li>
+                <li><Link to="/admin-login" className="hover:text-gray-900 text-xs text-blue-600">Admin Login</Link></li>
               </ul>
             </div>
           </div>

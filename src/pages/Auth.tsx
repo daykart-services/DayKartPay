@@ -31,11 +31,10 @@ const Auth: React.FC = () => {
       if (isLogin) {
         const { error } = await signIn(email, password)
         if (error) throw error
-        navigate('/')
+        navigate('/', { replace: true })
       } else {
         const { error } = await signUp(email, password)
         if (error) throw error
-        // After successful signup, redirect to home
         navigate('/', { replace: true })
       }
     } catch (error: any) {

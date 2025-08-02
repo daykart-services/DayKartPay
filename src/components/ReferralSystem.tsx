@@ -208,6 +208,16 @@ const ReferralSystem: React.FC = () => {
               </p>
             </div>
           </div>
+          
+          {/* Request Redemption Button */}
+          <div className="mt-6 text-center">
+            <button className="px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors">
+              Request to Redeem Rewards
+            </button>
+            <p className="text-sm text-gray-500 mt-2">
+              Minimum ₹100 required for redemption
+            </p>
+          </div>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-3">
