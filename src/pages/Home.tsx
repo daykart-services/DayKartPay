@@ -51,10 +51,7 @@ const Home: React.FC = () => {
       </section>
 
       <FeaturedProducts />
-
-      {/* Video Section - Only on Home Page */}
       <VideoSection />
-
       <Footer />
     </div>
   )

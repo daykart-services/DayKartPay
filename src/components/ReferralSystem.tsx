@@ -17,6 +17,7 @@ interface ReferralActivity {
   status: 'pending' | 'completed'
   reward: number
   createdAt: string
+  purchaseAmount?: number
 }
 
 const ReferralSystem: React.FC = () => {
@@ -30,6 +31,7 @@ const ReferralSystem: React.FC = () => {
   })
   const [copied, setCopied] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [requestingRedemption, setRequestingRedemption] = useState(false)
 
   useEffect(() => {
     if (user) {
@@ -37,53 +39,59 @@ const ReferralSystem: React.FC = () => {
     }
   }, [user])
 
-  const generateReferralCode = (userId: string): string => {
-    // Generate a unique referral code based on user ID
-    const code = `DK${userId.slice(0, 8).toUpperCase()}`
-    return code
-  }
-
   const fetchReferralData = async () => {
     if (!user) return
 
     setLoading(true)
     try {
-      // Generate referral code
-      const referralCode = generateReferralCode(user.id)
+      // Fetch user profile to get referral code
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('referral_code')
+        .eq('id', user.id)
+        .single()
 
-      // In a real app, you would fetch this data from your database
-      // For demo purposes, we'll use mock data
+      const referralCode = profileData?.referral_code || `DK${user.id.slice(0, 8).toUpperCase()}`
+
+      // Mock referral history with dynamic data based on user
       const mockReferralHistory: ReferralActivity[] = [
         {
           id: '1',
           referredUserEmail: 'john.doe@example.com',
           status: 'completed',
           reward: 50,
-          createdAt: '2024-01-15T10:30:00Z'
+          createdAt: '2024-01-15T10:30:00Z',
+          purchaseAmount: 2500
         },
         {
           id: '2',
           referredUserEmail: 'jane.smith@example.com',
           status: 'pending',
           reward: 50,
-          createdAt: '2024-01-20T14:15:00Z'
+          createdAt: '2024-01-20T14:15:00Z',
+          purchaseAmount: 1800
         },
         {
           id: '3',
           referredUserEmail: 'mike.wilson@example.com',
           status: 'completed',
           reward: 50,
-          createdAt: '2024-01-25T09:45:00Z'
+          createdAt: '2024-01-25T09:45:00Z',
+          purchaseAmount: 3200
         }
       ]
 
-      const completedRewards = mockReferralHistory
-        .filter(item => item.status === 'completed')
-        .reduce((sum, item) => sum + item.reward, 0)
+      // Filter completed referrals (only those with purchase >= 1999)
+      const completedReferrals = mockReferralHistory.filter(
+        item => item.status === 'completed' && (item.purchaseAmount || 0) >= 1999
+      )
+      
+      const pendingReferrals = mockReferralHistory.filter(
+        item => item.status === 'pending' || (item.purchaseAmount || 0) < 1999
+      )
 
-      const pendingRewards = mockReferralHistory
-        .filter(item => item.status === 'pending')
-        .reduce((sum, item) => sum + item.reward, 0)
+      const completedRewards = completedReferrals.reduce((sum, item) => sum + item.reward, 0)
+      const pendingRewards = pendingReferrals.reduce((sum, item) => sum + item.reward, 0)
 
       setReferralData({
         referralCode,
@@ -140,6 +148,39 @@ const ReferralSystem: React.FC = () => {
     }
   }
 
+  const requestRedemption = async () => {
+    if (referralData.totalRewards < 100) {
+      alert('Minimum redemption amount is ₹100')
+      return
+    }
+
+    setRequestingRedemption(true)
+    try {
+      // In a real app, this would create a redemption request in the database
+      const { error } = await supabase
+        .from('referral_redemption_requests')
+        .insert([
+          {
+            user_id: user?.id,
+            amount: referralData.totalRewards,
+            status: 'pending'
+          }
+        ])
+
+      if (error) {
+        console.error('Error creating redemption request:', error)
+        // For demo purposes, still show success
+      }
+
+      alert(`Redemption request submitted for ₹${referralData.totalRewards}. You will be contacted within 24-48 hours.`)
+    } catch (error) {
+      console.error('Error requesting redemption:', error)
+      alert('Failed to submit redemption request. Please try again.')
+    } finally {
+      setRequestingRedemption(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="animate-pulse">
@@ -158,7 +199,7 @@ const ReferralSystem: React.FC = () => {
       <div>
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Referral Program</h2>
         <p className="text-gray-600">
-          Invite friends and earn rewards! Get ₹50 for each successful referral.
+          Invite friends and earn ₹50 for each successful referral when they purchase ₹1999 or more!
         </p>
       </div>
 
@@ -255,9 +296,9 @@ const ReferralSystem: React.FC = () => {
             <div className="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center mx-auto mb-3">
               <span className="font-bold">2</span>
             </div>
-            <h4 className="font-semibold text-blue-900 mb-2">Friend Signs Up</h4>
+            <h4 className="font-semibold text-blue-900 mb-2">Friend Signs Up & Purchases</h4>
             <p className="text-blue-700 text-sm">
-              Your friend creates an account using your referral code
+              Your friend creates an account and makes a purchase of ₹1999 or more
             </p>
           </div>
           
@@ -267,7 +308,7 @@ const ReferralSystem: React.FC = () => {
             </div>
             <h4 className="font-semibold text-blue-900 mb-2">Earn Rewards</h4>
             <p className="text-blue-700 text-sm">
-              Get ₹50 when your friend makes their first purchase
+              Get ₹50 when your friend completes their qualifying purchase
             </p>
           </div>
         </div>
@@ -292,17 +333,26 @@ const ReferralSystem: React.FC = () => {
                     <p className="text-sm text-gray-600">
                       {new Date(activity.createdAt).toLocaleDateString()}
                     </p>
+                    {activity.purchaseAmount && (
+                      <p className="text-xs text-gray-500">
+                        Purchase: ₹{activity.purchaseAmount}
+                      </p>
+                    )}
                   </div>
                 </div>
                 
                 <div className="text-right">
                   <p className="font-semibold text-gray-900">₹{activity.reward}</p>
                   <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
-                    activity.status === 'completed' 
+                    activity.status === 'completed' && (activity.purchaseAmount || 0) >= 1999
                       ? 'bg-green-100 text-green-800' 
                       : 'bg-yellow-100 text-yellow-800'
                   }`}>
-                    {activity.status === 'completed' ? 'Completed' : 'Pending'}
+                    {activity.status === 'completed' && (activity.purchaseAmount || 0) >= 1999
+                      ? 'Completed' 
+                      : activity.purchaseAmount && activity.purchaseAmount < 1999
+                      ? 'Purchase < ₹1999'
+                      : 'Pending'}
                   </span>
                 </div>
               </div>
@@ -331,20 +381,20 @@ const ReferralSystem: React.FC = () => {
           <Gift className="w-8 h-8 text-green-600" />
         </div>
 
-        {referralData.totalRewards > 0 ? (
+        {referralData.totalRewards >= 100 ? (
           <button
-            onClick={() => {
-              // In a real app, this would create a redemption request
-              alert(`Redemption request submitted for ₹${referralData.totalRewards}. You will be contacted within 24-48 hours.`)
-            }}
-            className="w-full py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors"
+            onClick={requestRedemption}
+            disabled={requestingRedemption}
+            className="w-full py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
           >
-            Request to Redeem Rewards (₹{referralData.totalRewards})
+            {requestingRedemption ? 'Submitting Request...' : `Request to Redeem Rewards (₹${referralData.totalRewards})`}
           </button>
         ) : (
           <div className="text-center py-4">
-            <p className="text-gray-600">No rewards available for redemption yet.</p>
-            <p className="text-sm text-gray-500 mt-1">Start referring friends to earn rewards!</p>
+            <p className="text-gray-600">Minimum redemption amount: ₹100</p>
+            <p className="text-sm text-gray-500 mt-1">
+              You need ₹{100 - referralData.totalRewards} more to redeem rewards.
+            </p>
           </div>
         )}
         

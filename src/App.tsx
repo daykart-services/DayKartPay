@@ -12,6 +12,9 @@ import CategoryPage from './pages/CategoryPage'
 import ProductDetail from './pages/ProductDetail'
 import ProductsPage from './pages/ProductsPage'
 import PaymentPage from './pages/PaymentPage'
+import Terms from './pages/Terms'
+import Privacy from './pages/Privacy'
+import Refund from './pages/Refund'
 
 function App() {
   return (
@@ -41,6 +44,11 @@ function App() {
               
               {/* Payment Route */}
               <Route path="/payment" element={<PaymentPage />} />
+              
+              {/* Policy Routes */}
+              <Route path="/terms" element={<Terms />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/refund" element={<Refund />} />
               
               {/* Protected Routes */}
               <Route 

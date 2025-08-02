@@ -21,17 +21,15 @@ const ProductDetail: React.FC = () => {
   const { addToCart: addToCartHook } = useCart()
   const navigate = useNavigate()
 
-  // Mock multiple images for demonstration
+  // Get product images including main image and additional images
   const productImages = product ? [
     product.image_url,
-    // Add more images if available in product.image_urls array
-    ...(product.image_urls || []).slice(0, 4)
-  ] : []
+    ...(product.image_urls || []).filter(url => url && url !== product.image_url)
+  ].filter(Boolean) : []
 
   useEffect(() => {
     if (id) {
       fetchProduct()
-      fetchRelatedProducts()
     }
   }, [id])
 
@@ -204,12 +202,12 @@ const ProductDetail: React.FC = () => {
           </button>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            {/* Product Image */}
+            {/* Product Image Gallery */}
             <div className="relative">
               {/* Main Image */}
               <div className="relative mb-4">
                 <img
-                  src={productImages[currentImageIndex]}
+                  src={productImages[currentImageIndex] || product.image_url}
                   alt={product.title}
                   className="w-full h-96 lg:h-[500px] object-cover object-center rounded-lg shadow-lg"
                 />
@@ -275,6 +273,15 @@ const ProductDetail: React.FC = () => {
                   {product.description}
                 </p>
               </div>
+
+              {/* Stock Information */}
+              {product.stock_quantity !== undefined && (
+                <div className="mb-6">
+                  <p className="text-sm text-gray-600">
+                    Stock: <span className="font-medium">{product.stock_quantity} units available</span>
+                  </p>
+                </div>
+              )}
 
               {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row gap-4 mb-8">
@@ -355,6 +362,7 @@ const ProductDetail: React.FC = () => {
       )}
 
       <Footer />
+      
       {/* Payment Modal */}
       {showPaymentModal && product && (
         <EnhancedQRGenerator

@@ -51,6 +51,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [])
 
   const signUp = async (email: string, password: string) => {
+  const signUp = async (email: string, password: string, referralCode?: string) => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -65,13 +66,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       // Create user profile
       try {
+        // Generate referral code for new user
+        const userReferralCode = `DK${data.user.id.slice(0, 8).toUpperCase()}`
+        
         await supabase
           .from('profiles')
           .insert([
             { 
               id: data.user.id, 
               email: data.user.email || email,
-              is_admin: false 
+              is_admin: false,
+              referral_code: userReferralCode,
+              referred_by: referralCode ? await getReferrerIdByCode(referralCode) : null
             }
           ])
       } catch (profileError) {
@@ -80,6 +86,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     
     return { data, error }
+  }
+
+  const getReferrerIdByCode = async (referralCode: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('referral_code', referralCode)
+        .single()
+      
+      if (error || !data) return null
+      return data.id
+    } catch (error) {
+      console.error('Error finding referrer:', error)
+      return null
+    }
   }
 
   const signIn = async (email: string, password: string) => {

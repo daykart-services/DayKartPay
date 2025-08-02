@@ -21,13 +21,13 @@ const Footer: React.FC = () => {
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-4">EXPLORE</h3>
               <ul className="space-y-2 text-sm text-gray-600">
-                <li><Link to="/" className="hover:text-gray-900">Home</Link></li>
-                <li><Link to="/products" className="hover:text-gray-900">All Products</Link></li>
-                <li><Link to="/beds" className="hover:text-gray-900">Beds</Link></li>
-                <li><Link to="/stationery" className="hover:text-gray-900">Stationery</Link></li>
-                <li><Link to="/books" className="hover:text-gray-900">Books</Link></li>
-                <li><Link to="/bathware" className="hover:text-gray-900">Bathware</Link></li>
-                <li><Link to="/dorm" className="hover:text-gray-900">Dorm</Link></li>
+                <li><Link to="/" className="hover:text-gray-900 transition-colors">Home</Link></li>
+                <li><Link to="/products" className="hover:text-gray-900 transition-colors">All Products</Link></li>
+                <li><Link to="/beds" className="hover:text-gray-900 transition-colors">Beds</Link></li>
+                <li><Link to="/stationery" className="hover:text-gray-900 transition-colors">Stationery</Link></li>
+                <li><Link to="/books" className="hover:text-gray-900 transition-colors">Books</Link></li>
+                <li><Link to="/bathware" className="hover:text-gray-900 transition-colors">Bathware</Link></li>
+                <li><Link to="/dorm" className="hover:text-gray-900 transition-colors">Dorm</Link></li>
               </ul>
             </div>
 
@@ -35,11 +35,11 @@ const Footer: React.FC = () => {
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-4">SUPPORT</h3>
               <ul className="space-y-2 text-sm text-gray-600">
-                <li><Link to="/terms" className="hover:text-gray-900">Terms & Conditions</Link></li>
-                <li><Link to="/refund" className="hover:text-gray-900">Refund Policy</Link></li>
-                <li><Link to="/privacy" className="hover:text-gray-900">Privacy Policy</Link></li>
-                <li><Link to="/shipping" className="hover:text-gray-900">Shipping Policy</Link></li>
-                <li><Link to="/contact" className="hover:text-gray-900">Contact Us</Link></li>
+                <li><Link to="/terms" className="hover:text-gray-900 transition-colors">Terms & Conditions</Link></li>
+                <li><Link to="/refund" className="hover:text-gray-900 transition-colors">Refund Policy</Link></li>
+                <li><Link to="/privacy" className="hover:text-gray-900 transition-colors">Privacy Policy</Link></li>
+                <li><Link to="/shipping" className="hover:text-gray-900 transition-colors">Shipping Policy</Link></li>
+                <li><Link to="/contact" className="hover:text-gray-900 transition-colors">Contact Us</Link></li>
               </ul>
             </div>
           </div>
@@ -47,10 +47,10 @@ const Footer: React.FC = () => {
           {/* Admin Login and Social Media */}
           <div className="mt-8 pt-8 border-t border-gray-200">
             <div className="flex flex-col items-center space-y-4">
-              {/* Admin Login Button */}
+              {/* Admin Login Button - Small size */}
               <Link
                 to="/admin-login"
-                className="text-xs text-gray-500 hover:text-gray-700 underline transition-colors"
+                className="text-xs text-gray-400 hover:text-gray-600 underline transition-colors px-2 py-1"
               >
                 Admin Portal
               </Link>

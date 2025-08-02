@@ -19,12 +19,15 @@ const Dashboard: React.FC = () => {
     fullName: '',
     email: '',
     phone: '',
-    address: ''
+    address: '',
+    referralCode: ''
   })
   const [editingProfile, setEditingProfile] = useState(false)
   const [loading, setLoading] = useState(true)
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [paymentAmount, setPaymentAmount] = useState(0)
+  const [paymentType, setPaymentType] = useState<'full' | 'cod'>('full')
+  const [transactionId, setTransactionId] = useState('')
   const { user } = useAuth()
   const { processPayment, processing } = usePayment()
   const { removeFromCart: removeCartItem } = useCart()
@@ -89,7 +92,8 @@ const Dashboard: React.FC = () => {
           fullName: profileData.full_name || '',
           email: profileData.email || user.email || '',
           phone: profileData.phone || '',
-          address: profileData.address || ''
+          address: profileData.address || '',
+          referralCode: profileData.referral_code || ''
         })
       }
     } catch (error) {
@@ -124,7 +128,7 @@ const Dashboard: React.FC = () => {
         .from('wishlist_items')
         .delete()
         .eq('id', itemId)
-        .eq('user_id', user.id) // Additional security check
+        .eq('user_id', user.id)
 
       if (error) throw error
       fetchUserData()
@@ -163,7 +167,7 @@ const Dashboard: React.FC = () => {
     }, 0)
   }
 
-  const handleCheckout = async () => {
+  const handleCheckout = async (type: 'full' | 'cod' = 'full') => {
     if (cartItems.length === 0) {
       alert('Your cart is empty')
       return
@@ -176,7 +180,12 @@ const Dashboard: React.FC = () => {
     }
 
     try {
-      setPaymentAmount(total)
+      setPaymentType(type)
+      if (type === 'cod') {
+        setPaymentAmount(Math.round(total * 0.1)) // 10% upfront for COD
+      } else {
+        setPaymentAmount(total)
+      }
       setShowPaymentModal(true)
     } catch (error) {
       console.error('Error initiating checkout:', error)
@@ -191,8 +200,9 @@ const Dashboard: React.FC = () => {
     }
 
     try {
+      const total = getTotalCartValue()
       const paymentData = {
-        amount: paymentAmount,
+        amount: paymentType === 'cod' ? Math.round(total * 0.1) : total,
         items: cartItems.map(item => ({
           id: item.product_id,
           title: item.products?.title,
@@ -205,14 +215,10 @@ const Dashboard: React.FC = () => {
       const result = await processPayment(paymentData)
       
       if (result.success) {
-        // Close payment modal first
         setShowPaymentModal(false)
-        
-        // Show success message
+        setTransactionId('')
         alert('Payment successful! Your order has been placed.')
-        
-        // Refresh data to show updated cart and orders
-        fetchUserData() // Refresh data to show updated cart and orders
+        fetchUserData()
       } else {
         alert(`Payment failed: ${result.error}`)
       }
@@ -239,7 +245,7 @@ const Dashboard: React.FC = () => {
         <div className="flex justify-center space-x-8 mb-8">
           <button
             onClick={() => setActiveTab('profile')}
-            className={`flex items-center space-x-2 pb-2 border-b-2 ${
+            className={`flex items-center space-x-2 pb-2 border-b-2 transition-colors ${
               activeTab === 'profile' 
                 ? 'border-black text-black' 
                 : 'border-transparent text-gray-500 hover:text-gray-700'
@@ -251,7 +257,7 @@ const Dashboard: React.FC = () => {
           
           <button
             onClick={() => setActiveTab('cart')}
-            className={`flex items-center space-x-2 pb-2 border-b-2 ${
+            className={`flex items-center space-x-2 pb-2 border-b-2 transition-colors ${
               activeTab === 'cart' 
                 ? 'border-black text-black' 
                 : 'border-transparent text-gray-500 hover:text-gray-700'
@@ -263,7 +269,7 @@ const Dashboard: React.FC = () => {
           
           <button
             onClick={() => setActiveTab('liked')}
-            className={`flex items-center space-x-2 pb-2 border-b-2 ${
+            className={`flex items-center space-x-2 pb-2 border-b-2 transition-colors ${
               activeTab === 'liked' 
                 ? 'border-black text-black' 
                 : 'border-transparent text-gray-500 hover:text-gray-700'
@@ -275,19 +281,19 @@ const Dashboard: React.FC = () => {
           
           <button
             onClick={() => setActiveTab('orders')}
-            className={`flex items-center space-x-2 pb-2 border-b-2 ${
+            className={`flex items-center space-x-2 pb-2 border-b-2 transition-colors ${
               activeTab === 'orders' 
                 ? 'border-black text-black' 
                 : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
           >
             <Package size={20} />
-            <span className="font-medium">Orders</span>
+            <span className="font-medium">Orders ({orders.length})</span>
           </button>
           
           <button
             onClick={() => setActiveTab('referrals')}
-            className={`flex items-center space-x-2 pb-2 border-b-2 ${
+            className={`flex items-center space-x-2 pb-2 border-b-2 transition-colors ${
               activeTab === 'referrals' 
                 ? 'border-black text-black' 
                 : 'border-transparent text-gray-500 hover:text-gray-700'
@@ -373,6 +379,24 @@ const Dashboard: React.FC = () => {
                     )}
                   </div>
 
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Your Referral Code
+                    </label>
+                    <div className="flex items-center space-x-2">
+                      <p className="text-gray-900 py-2 font-mono bg-gray-100 px-3 rounded">{profile.referralCode || 'Not generated'}</p>
+                      {profile.referralCode && (
+                        <button
+                          onClick={() => navigator.clipboard.writeText(profile.referralCode)}
+                          className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
+                        >
+                          Copy
+                        </button>
+                      )}
+                    </div>
+                    <p className="text-sm text-gray-500">Share this code with friends to earn rewards</p>
+                  </div>
+
                   {editingProfile && (
                     <div className="flex space-x-4">
                       <button
@@ -413,7 +437,7 @@ const Dashboard: React.FC = () => {
                         </div>
                         <button
                           onClick={() => removeFromCart(item.id)}
-                          className="text-red-600 hover:text-red-700"
+                          className="text-red-600 hover:text-red-700 transition-colors"
                         >
                           Remove
                         </button>
@@ -421,16 +445,28 @@ const Dashboard: React.FC = () => {
                     ))}
                   </div>
                   <div className="mt-6 pt-6 border-t">
-                    <div className="flex justify-between items-center text-xl font-bold">
+                    <div className="flex justify-between items-center text-xl font-bold mb-4">
                       <span>Total: ₹{getTotalCartValue()}</span>
+                    </div>
+                    <div className="flex space-x-4">
                       <button 
-                        onClick={handleCheckout}
+                        onClick={() => handleCheckout('full')}
                         disabled={processing}
-                        className="px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex-1 px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                       >
-                        {processing ? 'Processing...' : 'Checkout'}
+                        {processing ? 'Processing...' : 'Pay Full Amount'}
+                      </button>
+                      <button 
+                        onClick={() => handleCheckout('cod')}
+                        disabled={processing}
+                        className="flex-1 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        COD (Pay 10% Now)
                       </button>
                     </div>
+                    <p className="text-sm text-gray-500 mt-2 text-center">
+                      COD: Pay 10% now (₹{Math.round(getTotalCartValue() * 0.1)}), rest on delivery
+                    </p>
                   </div>
                 </div>
               ) : (
@@ -460,7 +496,7 @@ const Dashboard: React.FC = () => {
                       <p className="text-lg font-semibold mb-4">₹{item.products?.price || 0}</p>
                       <button
                         onClick={() => removeFromWishlist(item.id)}
-                        className="w-full py-2 text-red-600 border border-red-600 rounded hover:bg-red-50"
+                        className="w-full py-2 text-red-600 border border-red-600 rounded hover:bg-red-50 transition-colors"
                       >
                         Remove from Wishlist
                       </button>
@@ -504,10 +540,23 @@ const Dashboard: React.FC = () => {
                               day: 'numeric'
                             })}
                           </p>
+                          {order.is_cod && (
+                            <p className="text-sm text-blue-600 mt-1">
+                              COD Order - Remaining: ₹{order.cod_amount}
+                            </p>
+                          )}
+                          {order.transaction_id && (
+                            <p className="text-sm text-gray-500 mt-1">
+                              Transaction ID: {order.transaction_id}
+                            </p>
+                          )}
                         </div>
                         <div className="text-right">
                           <p className="text-2xl font-bold text-gray-900">₹{order.total_amount}</p>
                           <p className="text-sm text-gray-500">Total Amount</p>
+                          {order.is_cod && (
+                            <p className="text-sm text-green-600">Paid: ₹{order.upfront_amount}</p>
+                          )}
                         </div>
                       </div>
                       

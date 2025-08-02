@@ -23,24 +23,31 @@ const Header: React.FC = () => {
   // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (showUserDropdown || showMenu) {
+      const target = event.target as HTMLElement
+      if (!target.closest('.dropdown-container')) {
         setShowUserDropdown(false)
+      }
+      if (!target.closest('.menu-container')) {
         setShowMenu(false)
       }
     }
 
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [showUserDropdown, showMenu])
+  }, [])
 
   const handleLogout = async () => {
-    if (isAdmin) {
-      adminLogout()
-    } else {
-      await signOut()
+    try {
+      if (isAdmin) {
+        adminLogout()
+      } else {
+        await signOut()
+      }
+      setShowUserDropdown(false)
+      navigate('/')
+    } catch (error) {
+      console.error('Logout error:', error)
     }
-    setShowUserDropdown(false)
-    navigate('/')
   }
 
   const handleAdminPortal = () => {
@@ -48,6 +55,14 @@ const Header: React.FC = () => {
       navigate('/admin-dashboard')
     }
     setShowUserDropdown(false)
+  }
+
+  const toggleMenu = () => {
+    setShowMenu(!showMenu)
+  }
+
+  const closeMenu = () => {
+    setShowMenu(false)
   }
 
   return (
@@ -60,17 +75,35 @@ const Header: React.FC = () => {
           </Link>
 
           {/* Menu Button */}
-          <button
-            onClick={() => setShowMenu(!showMenu)}
-            className="flex items-center space-x-1 text-gray-700 hover:text-gray-900 font-medium"
-          >
-            {showMenu ? <X size={20} /> : <Menu size={20} />}
-            <span>MENU</span>
-          </button>
+          <div className="menu-container relative">
+            <button
+              onClick={toggleMenu}
+              className="flex items-center space-x-1 text-gray-700 hover:text-gray-900 font-medium transition-colors"
+            >
+              {showMenu ? <X size={20} /> : <Menu size={20} />}
+              <span>MENU</span>
+            </button>
+
+            {/* Category Menu Dropdown */}
+            {showMenu && (
+              <div className="absolute top-full left-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                {categories.map((category) => (
+                  <Link
+                    key={category.name}
+                    to={category.path}
+                    onClick={closeMenu}
+                    className="block px-4 py-2 text-gray-700 hover:bg-gray-50 hover:text-gray-900 font-medium text-sm tracking-wide transition-colors"
+                  >
+                    {category.name}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
 
           {/* Right side - Cart and User */}
           <div className="flex items-center space-x-4">
-            <Link to="/dashboard?tab=cart" className="relative text-gray-700 hover:text-gray-900">
+            <Link to="/dashboard?tab=cart" className="relative text-gray-700 hover:text-gray-900 transition-colors">
               <ShoppingCart size={24} />
               {cartItemsCount > 0 && (
                 <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium animate-pulse">
@@ -80,23 +113,23 @@ const Header: React.FC = () => {
             </Link>
 
             {user || isAdmin ? (
-              <div className="relative">
+              <div className="relative dropdown-container">
                 <button
                   onClick={() => setShowUserDropdown(!showUserDropdown)}
-                  className="flex items-center space-x-1 text-gray-700 hover:text-gray-900"
+                  className="flex items-center space-x-1 text-gray-700 hover:text-gray-900 transition-colors"
                 >
                   <User size={20} />
-                  <span className="text-sm font-medium">{isAdmin ? 'admin' : user?.email?.split('@')[0]}</span>
+                  <span className="text-sm font-medium">{isAdmin ? 'Admin' : user?.email?.split('@')[0]}</span>
                   <ChevronDown size={16} />
                 </button>
 
                 {showUserDropdown && (
                   <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
                     <div className="px-4 py-2 border-b border-gray-100">
-                      <div className="font-medium text-gray-900">{isAdmin ? 'admin' : user?.email?.split('@')[0]}</div>
+                      <div className="font-medium text-gray-900">{isAdmin ? 'Administrator' : user?.email?.split('@')[0]}</div>
                       <div className="text-sm text-gray-500">{isAdmin ? 'admin@daykart.com' : user?.email}</div>
                       {isAdmin && (
-                        <span className="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded mt-1">
+                        <span className="inline-block px-2 py-1 text-xs bg-red-100 text-red-800 rounded mt-1">
                           Admin
                         </span>
                       )}
@@ -105,9 +138,9 @@ const Header: React.FC = () => {
                     {isAdmin && (
                       <button
                         onClick={handleAdminPortal}
-                        className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50"
+                        className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors"
                       >
-                        Admin Portal
+                        Admin Dashboard
                       </button>
                     )}
                     
@@ -115,15 +148,15 @@ const Header: React.FC = () => {
                       <Link
                         to="/dashboard"
                         onClick={() => setShowUserDropdown(false)}
-                        className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
+                        className="block px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors"
                       >
-                        Dashboard
+                        My Dashboard
                       </Link>
                     )}
                     
                     <button
                       onClick={handleLogout}
-                      className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50"
+                      className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors"
                     >
                       Logout
                     </button>
@@ -133,31 +166,13 @@ const Header: React.FC = () => {
             ) : (
               <Link
                 to="/auth"
-                className="text-gray-700 hover:text-gray-900 font-medium"
+                className="text-gray-700 hover:text-gray-900 font-medium transition-colors"
               >
                 Login
               </Link>
             )}
           </div>
         </div>
-
-        {/* Category Menu */}
-        {showMenu && (
-          <div className="border-t border-gray-200 py-4 bg-white shadow-lg">
-            <nav className="flex justify-center space-x-8">
-              {categories.map((category) => (
-                <Link
-                  key={category.name}
-                  to={category.path}
-                  onClick={() => setShowMenu(false)}
-                  className="text-gray-700 hover:text-gray-900 font-medium text-sm tracking-wide transition-colors"
-                >
-                  {category.name}
-                </Link>
-              ))}
-            </nav>
-          </div>
-        )}
       </div>
     </header>
   )

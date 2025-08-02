@@ -28,6 +28,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
     
     if (!user) {
       alert('Please login to add items to your cart')
+      navigate('/auth')
       return
     }
 
@@ -37,7 +38,6 @@ const ProductCard: React.FC<ProductCardProps> = ({
       if (!result.success) {
         alert(result.error || 'Failed to add item to cart')
       }
-      // Cart count and notifications are handled in useCart hook
     } catch (error) {
       console.error('Error adding to cart:', error)
       alert('Unable to add item to cart. Please try again.')
@@ -46,9 +46,16 @@ const ProductCard: React.FC<ProductCardProps> = ({
     }
   }
 
-  const buyNow = (e: React.MouseEvent) => {
+  const handleBuyNow = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
+    
+    if (!user) {
+      alert('Please login to make a purchase')
+      navigate('/auth')
+      return
+    }
+    
     navigate(`/product/${product.id}`)
   }
 
@@ -88,7 +95,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
             </span>
             <div className="flex space-x-2">
               <button
-                onClick={buyNow}
+                onClick={handleBuyNow}
                 className="px-3 py-2 bg-black text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors flex items-center space-x-1"
               >
                 <ShoppingBag size={16} />

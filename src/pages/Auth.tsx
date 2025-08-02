@@ -7,6 +7,7 @@ const Auth: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [referralCode, setReferralCode] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -20,7 +21,7 @@ const Auth: React.FC = () => {
 
     // Check if user is trying to use admin email in regular auth
     if (email === 'admin@daykart.com') {
-      setError('Admin accounts should use the dedicated Admin Login page. Please use the Admin Login link above.')
+      setError('Admin accounts should use the dedicated Admin Login page. Please use the Admin Login link in the footer.')
       return
     }
 
@@ -33,9 +34,8 @@ const Auth: React.FC = () => {
         if (error) throw error
         navigate('/', { replace: true })
       } else {
-        const { error } = await signUp(email, password)
+        const { error } = await signUp(email, password, referralCode)
         if (error) throw error
-        // After successful signup, redirect to home
         navigate('/', { replace: true })
       }
     } catch (error: any) {
@@ -105,6 +105,28 @@ const Auth: React.FC = () => {
                 </button>
               </div>
             </div>
+
+            {!isLogin && (
+              <div>
+                <label htmlFor="referralCode" className="block text-sm font-medium text-gray-700">
+                  Referral Code (Optional)
+                </label>
+                <div className="mt-1">
+                  <input
+                    id="referralCode"
+                    name="referralCode"
+                    type="text"
+                    value={referralCode}
+                    onChange={(e) => setReferralCode(e.target.value)}
+                    placeholder="Enter referral code if you have one"
+                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <p className="mt-1 text-xs text-gray-500">
+                  Get rewards when your referrer makes a purchase of ₹1999 or more
+                </p>
+              </div>
+            )}
 
             {isLogin && (
               <div className="flex items-center justify-between">

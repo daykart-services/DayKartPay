@@ -55,6 +55,10 @@ export interface Order {
   status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled'
   order_status?: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled'
   payment_method?: string
+  transaction_id?: string
+  is_cod?: boolean
+  cod_amount?: number
+  upfront_amount?: number
   created_at: string
 }
 

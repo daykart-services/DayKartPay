@@ -89,6 +89,7 @@ export const useCart = () => {
       throw new Error('User not authenticated')
     }
 
+    setLoading(true)
     try {
       const { error } = await supabase
         .from('cart_items')
@@ -121,6 +122,8 @@ export const useCart = () => {
       console.error('Error adding to cart:', error)
       showNotification('Failed to add to cart', 'error')
       return { success: false, error: error instanceof Error ? error.message : 'Failed to add to cart' }
+    } finally {
+      setLoading(false)
     }
   }, [user, fetchCartCount])
 

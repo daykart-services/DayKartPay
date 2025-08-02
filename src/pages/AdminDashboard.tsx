@@ -119,6 +119,22 @@ const AdminDashboard: React.FC = () => {
     }
   }
 
+  const updateOrderStatus = async (orderId: string, status: string) => {
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ order_status: status })
+        .eq('id', orderId)
+
+      if (error) throw error
+      fetchData()
+      alert('Order status updated successfully!')
+    } catch (error) {
+      console.error('Error updating order status:', error)
+      alert('Error updating order status')
+    }
+  }
+
   const deleteOrder = async (id: string) => {
     if (!confirm('Are you sure you want to delete this order?')) return
 
@@ -217,7 +233,7 @@ const AdminDashboard: React.FC = () => {
                       image_url: '', 
                       image_urls: [''],
                       price: '', 
-                     stock_quantity: '',
+                      stock_quantity: '',
                       description: '', 
                       category: 'beds',
                       is_featured: false 
@@ -453,16 +469,34 @@ const AdminDashboard: React.FC = () => {
                 <div className="space-y-4">
                   {orders.map((order) => (
                     <div key={order.id} className="border border-gray-200 rounded-lg p-6">
-                      <div className="flex justify-between items-start">
+                      <div className="flex justify-between items-start mb-4">
                         <div>
                           <h3 className="font-medium text-lg">Order #{order.id.slice(0, 8)}</h3>
                           <p className="text-gray-600">User ID: {order.user_id}</p>
-                          <p className="text-gray-600">Status: <span className="capitalize">{order.order_status || order.status}</span></p>
                           <p className="text-gray-600">Date: {new Date(order.created_at).toLocaleDateString()}</p>
                           <p className="text-gray-600">Products: {Array.isArray(order.products) ? order.products.length : 0} items</p>
+                          {order.transaction_id && (
+                            <p className="text-gray-600">Transaction ID: {order.transaction_id}</p>
+                          )}
+                          {order.is_cod && (
+                            <p className="text-blue-600">COD Order - Remaining: ₹{order.cod_amount}</p>
+                          )}
                         </div>
                         <div className="text-right">
                           <p className="text-2xl font-bold text-green-600">₹{order.total_amount}</p>
+                          <div className="mt-2">
+                            <select
+                              value={order.order_status || order.status || 'pending'}
+                              onChange={(e) => updateOrderStatus(order.id, e.target.value)}
+                              className="px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                              <option value="pending">Pending</option>
+                              <option value="processing">Processing</option>
+                              <option value="shipped">Shipped</option>
+                              <option value="delivered">Delivered</option>
+                              <option value="cancelled">Cancelled</option>
+                            </select>
+                          </div>
                           <button
                             onClick={() => deleteOrder(order.id)}
                             className="mt-2 flex items-center space-x-1 px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
@@ -472,6 +506,23 @@ const AdminDashboard: React.FC = () => {
                           </button>
                         </div>
                       </div>
+                      
+                      {/* Order Items */}
+                      {order.products && Array.isArray(order.products) && order.products.length > 0 && (
+                        <div className="border-t pt-4">
+                          <h4 className="font-medium text-gray-900 mb-3">Items</h4>
+                          <div className="space-y-2">
+                            {order.products.map((item: any, index: number) => (
+                              <div key={index} className="flex justify-between items-center text-sm">
+                                <span className="text-gray-700">{item.title || `Item ${index + 1}`}</span>
+                                <span className="text-gray-600">
+                                  {item.quantity ? `${item.quantity}x ` : ''}₹{item.price || 0}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
