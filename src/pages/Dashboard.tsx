@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { ShoppingCart, Heart, Package, User, Gift } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
+import { useCart } from '../contexts/CartContext'
 import { supabase, CartItem, WishlistItem, Order } from '../lib/supabase'
 import { usePayment } from '../hooks/usePayment'
-import { useCart } from '../hooks/useCart'
 import EnhancedQRGenerator from '../components/EnhancedQRGenerator'
 import ReferralSystem from '../components/ReferralSystem'
 
@@ -12,7 +12,6 @@ const Dashboard: React.FC = () => {
   const [searchParams] = useSearchParams()
   const initialTab = (searchParams.get('tab') as 'profile' | 'cart' | 'liked' | 'orders' | 'referrals') || 'profile'
   const [activeTab, setActiveTab] = useState<'profile' | 'cart' | 'liked' | 'orders' | 'referrals'>(initialTab)
-  const [cartItems, setCartItems] = useState<CartItem[]>([])
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([])
   const [orders, setOrders] = useState<Order[]>([])
   const [profile, setProfile] = useState({
@@ -30,7 +29,7 @@ const Dashboard: React.FC = () => {
   const [transactionId, setTransactionId] = useState('')
   const { user } = useAuth()
   const { processPayment, processing } = usePayment()
-  const { removeFromCart: removeCartItem } = useCart()
+  const { cartItems, removeFromCart, getTotalAmount, clearCart } = useCart()
 
   useEffect(() => {
     // Update tab from URL params
@@ -51,15 +50,6 @@ const Dashboard: React.FC = () => {
 
     setLoading(true)
     try {
-      // Fetch cart items
-      const { data: cartData } = await supabase
-        .from('cart_items')
-        .select(`
-          *,
-          products(*)
-        `)
-        .eq('user_id', user.id)
-
       // Fetch wishlist items
       const { data: wishlistData } = await supabase
         .from('wishlist_items')
@@ -83,7 +73,6 @@ const Dashboard: React.FC = () => {
         .eq('id', user.id)
         .single()
 
-      setCartItems(cartData || [])
       setWishlistItems(wishlistData || [])
       setOrders(ordersData || [])
       
@@ -100,20 +89,6 @@ const Dashboard: React.FC = () => {
       console.error('Error fetching user data:', error)
     } finally {
       setLoading(false)
-    }
-  }
-
-  const removeFromCart = async (itemId: string) => {
-    try {
-      const result = await removeCartItem(itemId)
-      if (result.success) {
-        fetchUserData()
-      } else {
-        alert(result.error || 'Failed to remove item from cart')
-      }
-    } catch (error) {
-      console.error('Error removing from cart:', error)
-      alert('Unable to remove item from cart. Please try again.')
     }
   }
 
@@ -160,20 +135,13 @@ const Dashboard: React.FC = () => {
     }
   }
 
-  const getTotalCartValue = () => {
-    return cartItems.reduce((total, item) => {
-      const price = item.products?.price || 0
-      return total + (price * item.quantity)
-    }, 0)
-  }
-
   const handleCheckout = async (type: 'full' | 'cod' = 'full') => {
     if (cartItems.length === 0) {
       alert('Your cart is empty')
       return
     }
 
-    const total = getTotalCartValue()
+    const total = getTotalAmount()
     if (total <= 0) {
       alert('Invalid cart total')
       return
@@ -193,14 +161,14 @@ const Dashboard: React.FC = () => {
     }
   }
 
-  const handlePaymentSuccess = async () => {
+  const handlePaymentSuccess = async (txnId?: string) => {
     if (!user) {
       alert('Please login to complete payment')
       return
     }
 
     try {
-      const total = getTotalCartValue()
+      const total = getTotalAmount()
       const paymentData = {
         amount: paymentType === 'cod' ? Math.round(total * 0.1) : total,
         items: cartItems.map(item => ({
@@ -209,7 +177,11 @@ const Dashboard: React.FC = () => {
           price: item.products?.price,
           quantity: item.quantity
         })),
-        paymentMethod: 'phonepe' as const
+        paymentMethod: 'phonepe' as const,
+        transactionId: txnId || transactionId,
+        isCod: paymentType === 'cod',
+        codAmount: paymentType === 'cod' ? total - Math.round(total * 0.1) : 0,
+        upfrontAmount: paymentType === 'cod' ? Math.round(total * 0.1) : total
       }
 
       const result = await processPayment(paymentData)
@@ -446,7 +418,7 @@ const Dashboard: React.FC = () => {
                   </div>
                   <div className="mt-6 pt-6 border-t">
                     <div className="flex justify-between items-center text-xl font-bold mb-4">
-                      <span>Total: ₹{getTotalCartValue()}</span>
+                      <span>Total: ₹{getTotalAmount()}</span>
                     </div>
                     <div className="flex space-x-4">
                       <button 
@@ -465,7 +437,7 @@ const Dashboard: React.FC = () => {
                       </button>
                     </div>
                     <p className="text-sm text-gray-500 mt-2 text-center">
-                      COD: Pay 10% now (₹{Math.round(getTotalCartValue() * 0.1)}), rest on delivery
+                      COD: Pay 10% now (₹{Math.round(getTotalAmount() * 0.1)}), rest on delivery
                     </p>
                   </div>
                 </div>
@@ -617,6 +589,9 @@ const Dashboard: React.FC = () => {
           merchantName="DAYKART"
           merchantUPI="9652377187-2@ybl"
           merchantId="Saviti PS Murthy"
+          isCod={paymentType === 'cod'}
+          transactionId={transactionId}
+          onTransactionIdChange={setTransactionId}
         />
       )}
     </div>

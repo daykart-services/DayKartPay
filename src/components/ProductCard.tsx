@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { ShoppingCart, ShoppingBag } from 'lucide-react'
 import type { Product } from '../types'
 import { useAuth } from '../contexts/AuthContext'
-import { useCart } from '../hooks/useCart'
+import { useCart } from '../contexts/CartContext'
 
 interface ProductCardProps {
   product: Product

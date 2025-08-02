@@ -1,14 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { X, CheckCircle, AlertCircle, Loader, RefreshCw, Smartphone } from 'lucide-react'
-import { generateUPIString, validateUPIData, generateUPIIntent, formatAmount } from '../utils/upiGenerator'
+import { generateUPIString, validateUPIData, formatAmount } from '../utils/upiGenerator'
 
 interface EnhancedQRGeneratorProps {
   amount: number
   onClose: () => void
-  onPaymentSuccess: () => void
+  onPaymentSuccess: (transactionId?: string) => void
   merchantName?: string
   merchantUPI?: string
   merchantId?: string
+  isCod?: boolean
+  transactionId?: string
+  onTransactionIdChange?: (txnId: string) => void
 }
 
 interface QRGenerationService {
@@ -23,7 +26,10 @@ const EnhancedQRGenerator: React.FC<EnhancedQRGeneratorProps> = ({
   onPaymentSuccess,
   merchantName = "DAYKART",
   merchantUPI = "9652377187-2@ybl",
-  merchantId = "Saviti PS Murthy"
+  merchantId = "Saviti PS Murthy",
+  isCod = false,
+  transactionId = '',
+  onTransactionIdChange
 }) => {
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('')
   const [loading, setLoading] = useState(true)
@@ -33,6 +39,7 @@ const EnhancedQRGenerator: React.FC<EnhancedQRGeneratorProps> = ({
   const [currentService, setCurrentService] = useState<string>('')
   const [upiString, setUpiString] = useState<string>('')
   const [retryCount, setRetryCount] = useState(0)
+  const [manualTxnId, setManualTxnId] = useState(transactionId)
 
   // QR Generation Services with fallbacks
   const qrServices: QRGenerationService[] = [
@@ -45,11 +52,6 @@ const EnhancedQRGenerator: React.FC<EnhancedQRGeneratorProps> = ({
       name: 'Google Charts',
       generateURL: (upi) => `https://chart.googleapis.com/chart?chs=400x400&cht=qr&chl=${encodeURIComponent(upi)}&choe=UTF-8&chld=M|2`,
       priority: 2
-    },
-    {
-      name: 'QR Code API',
-      generateURL: (upi) => `https://qr-code-generator-api.herokuapp.com/api/qr?data=${encodeURIComponent(upi)}&size=400x400&format=png`,
-      priority: 3
     }
   ]
 
@@ -90,13 +92,6 @@ const EnhancedQRGenerator: React.FC<EnhancedQRGeneratorProps> = ({
       setCurrentService(service.name)
       const qrUrl = service.generateURL(generatedUpiString)
 
-      // Test if the QR service is accessible
-      const testResponse = await fetch(qrUrl, { 
-        method: 'HEAD',
-        mode: 'no-cors' // Allow cross-origin requests
-      }).catch(() => null)
-
-      // For no-cors mode, we can't check response status, so we'll try to load the image
       setQrCodeUrl(qrUrl)
       setLoading(false)
 
@@ -159,8 +154,21 @@ const EnhancedQRGenerator: React.FC<EnhancedQRGeneratorProps> = ({
   const handlePaymentSuccess = () => {
     setPaymentStatus('success')
     setTimeout(() => {
-      onPaymentSuccess()
+      onPaymentSuccess(manualTxnId || `TXN${Date.now()}`)
     }, 1500)
+  }
+
+  const handleManualPaymentConfirm = () => {
+    if (!manualTxnId.trim()) {
+      alert('Please enter transaction ID')
+      return
+    }
+    
+    if (onTransactionIdChange) {
+      onTransactionIdChange(manualTxnId)
+    }
+    
+    handlePaymentSuccess()
   }
 
   const retryQRGeneration = () => {
@@ -192,7 +200,9 @@ const EnhancedQRGenerator: React.FC<EnhancedQRGeneratorProps> = ({
       <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex justify-between items-center p-6 border-b">
-          <h2 className="text-xl font-bold text-gray-900">Complete Payment</h2>
+          <h2 className="text-xl font-bold text-gray-900">
+            {isCod ? 'Pay Upfront Amount' : 'Complete Payment'}
+          </h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -206,7 +216,9 @@ const EnhancedQRGenerator: React.FC<EnhancedQRGeneratorProps> = ({
           {/* Amount Display */}
           <div className="text-center mb-6">
             <div className="text-3xl font-bold text-gray-900 mb-2">{formatAmount(amount)}</div>
-            <div className="text-gray-600">Payment Amount</div>
+            <div className="text-gray-600">
+              {isCod ? 'Upfront Payment (10%)' : 'Payment Amount'}
+            </div>
             <div className="text-sm text-gray-500 mt-1">To: {merchantName}</div>
           </div>
 
@@ -247,6 +259,26 @@ const EnhancedQRGenerator: React.FC<EnhancedQRGeneratorProps> = ({
                 )}
               </div>
 
+              {/* Manual Transaction ID Input */}
+              <div className="mb-6 p-4 bg-blue-50 rounded-lg">
+                <h4 className="text-sm font-semibold text-blue-800 mb-2">Already Paid? Enter Transaction ID</h4>
+                <div className="flex space-x-2">
+                  <input
+                    type="text"
+                    value={manualTxnId}
+                    onChange={(e) => setManualTxnId(e.target.value)}
+                    placeholder="Enter Transaction ID"
+                    className="flex-1 px-3 py-2 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  />
+                  <button
+                    onClick={handleManualPaymentConfirm}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                  >
+                    Confirm
+                  </button>
+                </div>
+              </div>
+
               {/* QR Code Section */}
               <div className="text-center mb-6">
                 {loading ? (
@@ -280,7 +312,7 @@ const EnhancedQRGenerator: React.FC<EnhancedQRGeneratorProps> = ({
                   </div>
                 ) : (
                   <div>
-                    {/* PhonePe Branding */}
+                    {/* UPI Branding */}
                     <div className="mb-4">
                       <div className="flex items-center justify-center mb-2">
                         <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center mr-2">
@@ -300,7 +332,7 @@ const EnhancedQRGenerator: React.FC<EnhancedQRGeneratorProps> = ({
                         onError={handleImageError}
                         onLoad={() => {
                           console.log('QR code loaded successfully')
-                          setRetryCount(0) // Reset retry count on successful load
+                          setRetryCount(0)
                         }}
                       />
                     </div>

@@ -6,7 +6,7 @@ interface AuthContextType {
   user: User | null
   isAdmin: boolean
   loading: boolean
-  signUp: (email: string, password: string) => Promise<any>
+  signUp: (email: string, password: string, referralCode?: string) => Promise<any>
   signIn: (email: string, password: string) => Promise<any>
   signOut: () => Promise<void>
   adminLogin: (email: string, password: string) => boolean
@@ -68,6 +68,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Generate referral code for new user
         const userReferralCode = `DK${data.user.id.slice(0, 8).toUpperCase()}`
         
+        let referrerId = null
+        if (referralCode) {
+          referrerId = await getReferrerIdByCode(referralCode)
+        }
+        
         await supabase
           .from('profiles')
           .insert([
@@ -76,7 +81,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               email: data.user.email || email,
               is_admin: false,
               referral_code: userReferralCode,
-              referred_by: referralCode ? await getReferrerIdByCode(referralCode) : null
+              referred_by: referrerId
             }
           ])
       } catch (profileError) {

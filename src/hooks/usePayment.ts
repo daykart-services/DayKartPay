@@ -5,7 +5,11 @@ import { useAuth } from '../contexts/AuthContext'
 interface PaymentData {
   amount: number
   items: any[]
-  paymentMethod: 'phonepe' | 'upi' | 'card'
+  paymentMethod: 'phonepe' | 'upi' | 'card' | 'cod'
+  transactionId?: string
+  isCod?: boolean
+  codAmount?: number
+  upfrontAmount?: number
 }
 
 interface PaymentResult {
@@ -40,7 +44,7 @@ export const usePayment = () => {
         return sum + (item.price * item.quantity)
       }, 0)
       
-      if (Math.abs(calculatedTotal - paymentData.amount) > 0.01) {
+      if (Math.abs(calculatedTotal - paymentData.amount) > 0.01 && !paymentData.isCod) {
         throw new Error('Payment amount mismatch with cart total')
       }
 
@@ -51,9 +55,15 @@ export const usePayment = () => {
       const orderData = {
         user_id: user.id,
         products: paymentData.items,
-        total_amount: paymentData.amount,
-        status: 'completed', // Mark as completed for demo purposes
-        payment_method: paymentData.paymentMethod || 'phonepe'
+        total_amount: calculatedTotal,
+        status: 'completed',
+        payment_method: paymentData.paymentMethod || 'phonepe',
+        transaction_id: paymentData.transactionId || orderRef,
+        payment_status: paymentData.isCod ? 'partial' : 'paid',
+        order_status: 'pending',
+        is_cod: paymentData.isCod || false,
+        cod_amount: paymentData.codAmount || 0,
+        upfront_amount: paymentData.upfrontAmount || paymentData.amount
       }
 
       const { data: order, error: orderError } = await supabase
@@ -63,6 +73,9 @@ export const usePayment = () => {
         .single()
 
       if (orderError) throw orderError
+
+      // Process referral rewards if applicable
+      await processReferralReward(user.id, calculatedTotal)
 
       // Clear cart after successful order creation
       const { error: clearCartError } = await supabase
@@ -90,11 +103,55 @@ export const usePayment = () => {
     }
   }
 
+  const processReferralReward = async (userId: string, orderAmount: number) => {
+    try {
+      // Check if user was referred and order amount is >= 1999
+      if (orderAmount < 1999) return
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('referred_by, referral_activated')
+        .eq('id', userId)
+        .single()
+
+      if (!profile?.referred_by || profile.referral_activated) return
+
+      // Mark referral as activated and add reward to referrer
+      await supabase
+        .from('profiles')
+        .update({ referral_activated: true })
+        .eq('id', userId)
+
+      // Add reward to referrer
+      await supabase
+        .from('profiles')
+        .update({ 
+          total_referral_rewards: supabase.sql`total_referral_rewards + 50`,
+          pending_referral_rewards: supabase.sql`pending_referral_rewards - 50`
+        })
+        .eq('id', profile.referred_by)
+
+      // Create referral transaction record
+      await supabase
+        .from('referral_transactions')
+        .insert([{
+          referrer_id: profile.referred_by,
+          referred_id: userId,
+          reward_amount: 50,
+          status: 'completed',
+          completed_at: new Date().toISOString()
+        }])
+
+    } catch (error) {
+      console.error('Error processing referral reward:', error)
+    }
+  }
+
   const updateOrderStatus = async (orderId: string, status: string) => {
     try {
       const { error } = await supabase
         .from('orders')
-        .update({ status })
+        .update({ order_status: status })
         .eq('id', orderId)
 
       if (error) throw error
