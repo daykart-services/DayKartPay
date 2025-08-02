@@ -331,7 +331,7 @@ const ReferralSystem: React.FC = () => {
             <h4 className="font-semibold text-blue-900 mb-2">Earn ₹50</h4>
             <p className="text-blue-700 text-sm">
               Get ₹50 reward in your account
-            </button>
+            </p>
           </div>
         </div>
       </div>
