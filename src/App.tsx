@@ -12,17 +12,14 @@ import CategoryPage from './pages/CategoryPage'
 import ProductDetail from './pages/ProductDetail'
 import ProductsPage from './pages/ProductsPage'
 import PaymentPage from './pages/PaymentPage'
-import TermsConditions from './pages/TermsConditions'
-import PrivacyPolicy from './pages/PrivacyPolicy'
-import RefundPolicy from './pages/RefundPolicy'
 
 function App() {
   return (
     <AuthProvider>
       <Router>
-        <div className="min-h-screen bg-white flex flex-col">
+        <div className="min-h-screen bg-white">
           <Header />
-          <main className="flex-1">
+          <main>
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/auth" element={<Auth />} />
@@ -44,11 +41,6 @@ function App() {
               
               {/* Payment Route */}
               <Route path="/payment" element={<PaymentPage />} />
-              
-              {/* Policy Routes */}
-              <Route path="/terms" element={<TermsConditions />} />
-              <Route path="/privacy" element={<PrivacyPolicy />} />
-              <Route path="/refund" element={<RefundPolicy />} />
               
               {/* Protected Routes */}
               <Route 

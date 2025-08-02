@@ -29,12 +29,14 @@ const ProductsPage: React.FC = () => {
   }
 
   return (
-    <CategoryLayout 
-      title={getCategoryTitle(category)} 
-      description={getCategoryDescription(category)}
-    >
-      <ProductGrid category={category} />
-    </CategoryLayout>
+    <>
+      <CategoryLayout 
+        title={getCategoryTitle(category)} 
+        description={getCategoryDescription(category)}
+      >
+        <ProductGrid category={category} />
+      </CategoryLayout>
+    </>
   )
 }
 

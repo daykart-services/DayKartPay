@@ -14,7 +14,7 @@ const AdminDashboard: React.FC = () => {
 
   const [productForm, setProductForm] = useState({
     title: '',
-    image_urls: [''],
+    image_url: '',
     price: '',
     stock_quantity: '',
     description: '',
@@ -55,19 +55,10 @@ const AdminDashboard: React.FC = () => {
   const handleProductSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    // Filter out empty image URLs
-    const validImageUrls = productForm.image_urls.filter(url => url.trim() !== '')
-    
-    if (validImageUrls.length === 0) {
-      alert('Please provide at least one image URL')
-      return
-    }
-    
     try {
       const productData = {
         title: productForm.title,
-        image_url: validImageUrls[0], // Primary image for backward compatibility
-        image_urls: validImageUrls, // Store all images as JSON array
+        image_url: productForm.image_url,
         price: parseFloat(productForm.price),
         stock_quantity: parseInt(productForm.stock_quantity) || 0,
         description: productForm.description,
@@ -92,7 +83,7 @@ const AdminDashboard: React.FC = () => {
 
       setProductForm({ 
         title: '', 
-        image_urls: [''], 
+        image_url: '', 
         price: '', 
         stock_quantity: '',
         description: '', 
@@ -144,18 +135,9 @@ const AdminDashboard: React.FC = () => {
 
   const startEdit = (product: Product) => {
     setEditingProduct(product)
-    
-    // Handle both old single image_url and new multiple image_urls
-    let imageUrls = ['']
-    if ((product as any).image_urls && Array.isArray((product as any).image_urls)) {
-      imageUrls = (product as any).image_urls
-    } else if (product.image_url) {
-      imageUrls = [product.image_url]
-    }
-    
     setProductForm({
       title: product.title,
-      image_urls: imageUrls,
+      image_url: product.image_url,
       price: product.price.toString(),
       stock_quantity: (product as any).stock_quantity?.toString() || '0',
       description: product.description,
@@ -163,32 +145,6 @@ const AdminDashboard: React.FC = () => {
       is_featured: product.is_featured
     })
     setShowProductForm(true)
-  }
-
-  const addImageUrl = () => {
-    setProductForm({
-      ...productForm,
-      image_urls: [...productForm.image_urls, '']
-    })
-  }
-
-  const removeImageUrl = (index: number) => {
-    if (productForm.image_urls.length > 1) {
-      const newImageUrls = productForm.image_urls.filter((_, i) => i !== index)
-      setProductForm({
-        ...productForm,
-        image_urls: newImageUrls
-      })
-    }
-  }
-
-  const updateImageUrl = (index: number, value: string) => {
-    const newImageUrls = [...productForm.image_urls]
-    newImageUrls[index] = value
-    setProductForm({
-      ...productForm,
-      image_urls: newImageUrls
-    })
   }
 
   if (!isAdmin) {
@@ -254,7 +210,7 @@ const AdminDashboard: React.FC = () => {
                     setEditingProduct(null)
                     setProductForm({ 
                       title: '', 
-                      image_urls: [''], 
+                      image_url: '', 
                       price: '', 
                      stock_quantity: '',
                       description: '', 
@@ -271,16 +227,12 @@ const AdminDashboard: React.FC = () => {
 
               {/* Product Form Modal */}
               {showProductForm && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                  <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
-                    <div className="p-6 border-b border-gray-200">
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                  <div className="bg-white rounded-lg p-6 w-full max-w-md">
                     <h3 className="text-lg font-bold mb-4">
                       {editingProduct ? 'Edit Product' : 'Add New Product'}
                     </h3>
-                    </div>
-                    
-                    <div className="flex-1 overflow-y-auto p-6">
-                    <form onSubmit={handleProductSubmit} className="space-y-6">
+                    <form onSubmit={handleProductSubmit} className="space-y-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
                         <input
@@ -291,49 +243,16 @@ const AdminDashboard: React.FC = () => {
                           required
                         />
                       </div>
-                      
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Product Images</label>
-                        <div className="space-y-3">
-                          {productForm.image_urls.map((url, index) => (
-                            <div key={index} className="flex items-center space-x-2">
-                              <div className="flex-1">
-                                <input
-                                  type="url"
-                                  value={url}
-                                  onChange={(e) => updateImageUrl(index, e.target.value)}
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
-                                  placeholder={`Image URL ${index + 1} (https://example.com/image.jpg)`}
-                                  required={index === 0}
-                                />
-                              </div>
-                              {productForm.image_urls.length > 1 && (
-                                <button
-                                  type="button"
-                                  onClick={() => removeImageUrl(index)}
-                                  className="px-3 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
-                                  title="Remove image"
-                                >
-                                  ×
-                                </button>
-                              )}
-                            </div>
-                          ))}
-                          
-                          <button
-                            type="button"
-                            onClick={addImageUrl}
-                            className="w-full py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-gray-400 hover:text-gray-700 transition-colors"
-                          >
-                            + Add Another Image
-                          </button>
-                          
-                          <p className="text-xs text-gray-500">
-                            Tip: Use high-quality images (800x800px recommended). First image will be the primary display image.
-                          </p>
-                        </div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
+                        <input
+                          type="url"
+                          value={productForm.image_url}
+                          onChange={(e) => setProductForm({ ...productForm, image_url: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                          required
+                        />
                       </div>
-                      
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Price (₹)</label>
                         <input
@@ -345,26 +264,19 @@ const AdminDashboard: React.FC = () => {
                           required
                         />
                       </div>
-                      
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Stock Quantity</label>
-                        <div className="space-y-2">
-                          <input
-                            type="number"
-                            min="0"
-                            max="9999"
-                            value={productForm.stock_quantity}
-                            onChange={(e) => setProductForm({ ...productForm, stock_quantity: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
-                            placeholder="Enter available quantity"
-                            required
-                          />
-                          <p className="text-xs text-gray-500">
-                            Set to 0 for out of stock
-                          </p>
-                        </div>
+                        <input
+                          type="number"
+                          min="0"
+                          max="9999"
+                          value={productForm.stock_quantity}
+                          onChange={(e) => setProductForm({ ...productForm, stock_quantity: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                          placeholder="0"
+                          required
+                        />
                       </div>
-                      
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
                         <select
@@ -379,7 +291,6 @@ const AdminDashboard: React.FC = () => {
                           <option value="dorm">Dorm</option>
                         </select>
                       </div>
-                      
                       <div>
                         <label className="flex items-center space-x-2">
                           <input
@@ -391,7 +302,6 @@ const AdminDashboard: React.FC = () => {
                           <span className="text-sm font-medium text-gray-700">Featured Product</span>
                         </label>
                       </div>
-                      
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
                         <textarea
@@ -402,13 +312,9 @@ const AdminDashboard: React.FC = () => {
                           required
                         />
                       </div>
-                    </form>
-                    </div>
-                    
-                    <div className="p-6 border-t border-gray-200">
                       <div className="flex space-x-3">
                         <button
-                          onClick={handleProductSubmit}
+                          type="submit"
                           className="flex-1 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
                         >
                           {editingProduct ? 'Update' : 'Add'} Product
@@ -424,7 +330,7 @@ const AdminDashboard: React.FC = () => {
                           Cancel
                         </button>
                       </div>
-                    </div>
+                    </form>
                   </div>
                 </div>
               )}
@@ -445,31 +351,14 @@ const AdminDashboard: React.FC = () => {
                         src={product.image_url}
                         alt={product.title}
                         className="w-full h-48 object-cover rounded mb-4"
-                        onError={(e) => {
-                          // Fallback to first image from image_urls array if available
-                          const target = e.target as HTMLImageElement
-                          const imageUrls = (product as any).image_urls
-                          if (imageUrls && Array.isArray(imageUrls) && imageUrls.length > 0 && imageUrls[0] !== target.src) {
-                            target.src = imageUrls[0]
-                          }
-                        }}
                       />
                       <h3 className="font-medium mb-2">{product.title}</h3>
                       <p className="text-gray-600 text-sm mb-2 line-clamp-2">{product.description}</p>
                       <p className="text-lg font-semibold mb-2">₹{product.price}</p>
                       <p className="text-sm text-gray-500 mb-4 capitalize">{product.category}</p>
-                      <div className="flex items-center justify-between mb-4">
-                        <p className="text-sm text-gray-600">
+                      <p className="text-sm text-gray-600 mb-4">
                         Stock: {(product as any).stock_quantity || 0} units
-                        </p>
-                        <span className={`px-2 py-1 text-xs rounded-full ${
-                          ((product as any).stock_quantity || 0) > 0 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-red-100 text-red-800'
-                        }`}>
-                          {((product as any).stock_quantity || 0) > 0 ? 'In Stock' : 'Out of Stock'}
-                        </span>
-                      </div>
+                      </p>
                       <div className="flex space-x-2">
                         <button
                           onClick={() => startEdit(product)}
@@ -510,20 +399,13 @@ const AdminDashboard: React.FC = () => {
                       <div className="flex justify-between items-start">
                         <div>
                           <h3 className="font-medium text-lg">Order #{order.id.slice(0, 8)}</h3>
-                          <p className="text-gray-600">User: {order.user_id.slice(0, 8)}...</p>
+                          <p className="text-gray-600">User ID: {order.user_id}</p>
                           <p className="text-gray-600">Status: <span className="capitalize">{order.status}</span></p>
-                          <p className="text-gray-600">Date: {new Date(order.created_at).toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}</p>
-                          <p className="text-gray-600">Items: {Array.isArray(order.products) ? order.products.length : 0}</p>
+                          <p className="text-gray-600">Date: {new Date(order.created_at).toLocaleDateString()}</p>
+                          <p className="text-gray-600">Products: {order.product_ids.length} items</p>
                         </div>
                         <div className="text-right">
-                          <p className="text-2xl font-bold text-green-600">₹{order.total_amount.toFixed(2)}</p>
-                          <p className="text-sm text-gray-500">Total Amount</p>
+                          <p className="text-2xl font-bold text-green-600">₹{order.total_amount}</p>
                           <button
                             onClick={() => deleteOrder(order.id)}
                             className="mt-2 flex items-center space-x-1 px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"

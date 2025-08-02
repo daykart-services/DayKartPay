@@ -1,10 +1,11 @@
 import React from 'react'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ShoppingCart, ShoppingBag, Eye } from 'lucide-react'
+import { Heart, ShoppingCart, ShoppingBag } from 'lucide-react'
 import type { Product } from '../types'
 import { useAuth } from '../contexts/AuthContext'
 import { useCart } from '../hooks/useCart'
+import { supabase } from '../lib/supabase'
 
 interface ProductCardProps {
   product: Product
@@ -46,18 +47,41 @@ const ProductCard: React.FC<ProductCardProps> = ({
     }
   }
 
-  const buyNow = (e: React.MouseEvent) => {
+  const addToWishlist = async (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
     
     if (!user) {
-      alert('Please login to make a purchase')
-      navigate('/auth')
+      alert('Please login to add items to your wishlist')
       return
     }
-    
-    // Navigate to product detail page with buy now intent
-    navigate(`/product/${product.id}?action=buy`)
+
+    try {
+      const { error } = await supabase
+        .from('wishlist_items')
+        .insert([
+          { user_id: user.id, product_id: product.id }
+        ])
+
+      if (error) {
+        if (error.code === '23505') {
+          alert('This item is already in your wishlist!')
+        } else {
+          throw error
+        }
+      } else {
+        alert('Added to wishlist!')
+      }
+    } catch (error) {
+      console.error('Error adding to wishlist:', error)
+      alert('Unable to add item to wishlist. Please try again.')
+    }
+  }
+
+  const buyNow = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    navigate(`/product/${product.id}`)
   }
 
   return (
@@ -81,7 +105,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
               </button>
               <button
                 onClick={buyNow}
-                className="p-2 bg-green-600 text-white rounded-full shadow-md hover:bg-green-700 transition-colors"
+                className="p-2 bg-black text-white rounded-full shadow-md hover:bg-gray-800 transition-colors"
                 title="Buy Now"
               >
                 <ShoppingBag size={20} />
@@ -101,21 +125,12 @@ const ProductCard: React.FC<ProductCardProps> = ({
             <span className="text-2xl font-bold text-gray-900">
               ₹{product.price}
             </span>
-            <div className="flex space-x-2">
-              <button
-                onClick={handleAddToCart}
-                disabled={isAddingToCart}
-                className="px-3 py-1 bg-blue-100 text-blue-700 text-sm font-medium rounded hover:bg-blue-200 transition-colors disabled:opacity-50"
-              >
-                {isAddingToCart ? 'Adding...' : 'Add to Cart'}
-              </button>
-              <button
-                onClick={buyNow}
-                className="px-3 py-1 bg-green-600 text-white text-sm font-medium rounded hover:bg-green-700 transition-colors"
-              >
-                Buy Now
-              </button>
-            </div>
+            <button
+              onClick={buyNow}
+              className="px-4 py-2 bg-black text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors"
+            >
+              Buy Now
+            </button>
           </div>
         </div>
       </Link>

@@ -1,42 +1,32 @@
 import React, { useEffect, useState } from 'react'
-import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom'
-import { ShoppingCart, ArrowLeft, ChevronLeft, ChevronRight, Star } from 'lucide-react'
+import { useParams, useNavigate, Link } from 'react-router-dom'
+import { Heart, ShoppingCart, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react'
 import { supabase, Product, type Product as ProductType } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { usePayment } from '../hooks/usePayment'
 import { useCart } from '../hooks/useCart'
 import EnhancedQRGenerator from '../components/EnhancedQRGenerator'
+import Footer from '../components/Footer'
 
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>()
-  const [searchParams] = useSearchParams()
   const [product, setProduct] = useState<Product | null>(null)
   const [relatedProducts, setRelatedProducts] = useState<ProductType[]>([])
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0)
+  const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [loading, setLoading] = useState(true)
   const [addingToCart, setAddingToCart] = useState(false)
+  const [addingToWishlist, setAddingToWishlist] = useState(false)
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const { user } = useAuth()
   const { processPayment, processing } = usePayment()
   const { addToCart: addToCartHook } = useCart()
   const navigate = useNavigate()
 
-  // Check if user came here via "Buy Now"
-  const isBuyNowAction = searchParams.get('action') === 'buy'
-
   // Mock multiple images for demonstration
   const productImages = product ? [
     product.image_url,
-    // Use additional images from image_urls array if available
-    ...((product as any).image_urls && Array.isArray((product as any).image_urls) 
-      ? (product as any).image_urls.slice(1) 
-      : [
-          // Fallback variations for demo
-          product.image_url.replace('w=800', 'w=800&sat=-20'),
-          product.image_url.replace('w=800', 'w=800&blur=1'),
-          product.image_url.replace('w=800', 'w=800&sepia=50'),
-        ]
-    )
+    product.image_url, // In real app, these would be different images
+    product.image_url,
   ] : []
 
   useEffect(() => {
@@ -45,13 +35,6 @@ const ProductDetail: React.FC = () => {
       fetchRelatedProducts()
     }
   }, [id])
-
-  // Auto-trigger buy now if coming from product card
-  useEffect(() => {
-    if (product && isBuyNowAction && user) {
-      setShowPaymentModal(true)
-    }
-  }, [product, isBuyNowAction, user])
 
   const fetchProduct = async () => {
     if (!id) return
@@ -120,6 +103,40 @@ const ProductDetail: React.FC = () => {
     }
   }
 
+  const addToWishlist = async () => {
+    if (!user) {
+      alert('Please login to add items to your wishlist')
+      navigate('/auth')
+      return
+    }
+
+    if (!product) return
+
+    setAddingToWishlist(true)
+    try {
+      const { error } = await supabase
+        .from('wishlist_items')
+        .insert([
+          { user_id: user.id, product_id: product.id }
+        ])
+
+      if (error) {
+        if (error.code === '23505') {
+          alert('This item is already in your wishlist!')
+        } else {
+          throw error
+        }
+      } else {
+        alert('Added to wishlist!')
+      }
+    } catch (error) {
+      console.error('Error adding to wishlist:', error)
+      alert('Unable to add item to wishlist. Please try again.')
+    } finally {
+      setAddingToWishlist(false)
+    }
+  }
+
   const buyNow = async () => {
     if (!user) {
       alert('Please login to make a purchase')
@@ -172,6 +189,14 @@ const ProductDetail: React.FC = () => {
     }
   }
 
+  const nextImage = () => {
+    setCurrentImageIndex((prev) => (prev + 1) % productImages.length)
+  }
+
+  const prevImage = () => {
+    setCurrentImageIndex((prev) => (prev - 1 + productImages.length) % productImages.length)
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -200,9 +225,9 @@ const ProductDetail: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       {/* Product Detail Section */}
-      <section className="py-8 bg-white">
+      <section className="py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Back Button */}
           <button
@@ -215,31 +240,49 @@ const ProductDetail: React.FC = () => {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             {/* Product Image */}
-            <div className="space-y-4">
+            <div className="relative">
               {/* Main Image */}
-              <div className="relative aspect-square bg-white rounded-lg overflow-hidden shadow-lg">
+              <div className="relative mb-4">
                 <img
-                  src={productImages[selectedImageIndex]}
+                  src={productImages[currentImageIndex]}
                   alt={product.title}
-                  className="w-full h-full object-cover object-center"
+                  className="w-full h-96 lg:h-[500px] object-cover object-center rounded-lg shadow-lg"
                 />
+                
+                {/* Image Navigation */}
+                {productImages.length > 1 && (
+                  <>
+                    <button
+                      onClick={prevImage}
+                      className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-80 hover:bg-opacity-100 rounded-full p-2 shadow-md transition-all"
+                    >
+                      <ChevronLeft size={20} />
+                    </button>
+                    <button
+                      onClick={nextImage}
+                      className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-80 hover:bg-opacity-100 rounded-full p-2 shadow-md transition-all"
+                    >
+                      <ChevronRight size={20} />
+                    </button>
+                  </>
+                )}
               </div>
               
-              {/* Image Thumbnails */}
+              {/* Thumbnail Navigation */}
               {productImages.length > 1 && (
-                <div className="grid grid-cols-4 gap-2">
+                <div className="flex space-x-2 justify-center">
                   {productImages.map((image, index) => (
                     <button
                       key={index}
-                      onClick={() => setSelectedImageIndex(index)}
-                      className={`aspect-square rounded-lg overflow-hidden border-2 transition-all ${
-                        selectedImageIndex === index ? 'border-black' : 'border-gray-200 hover:border-gray-400'
+                      onClick={() => setCurrentImageIndex(index)}
+                      className={`w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${
+                        currentImageIndex === index ? 'border-black' : 'border-gray-200'
                       }`}
                     >
                       <img
                         src={image}
                         alt={`${product.title} ${index + 1}`}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover object-center"
                       />
                     </button>
                   ))}
@@ -248,53 +291,32 @@ const ProductDetail: React.FC = () => {
             </div>
 
             {/* Product Information */}
-            <div className="space-y-6">
-              {/* Category Badge */}
-              <div>
+            <div className="flex flex-col justify-center">
+              <div className="mb-4">
                 <span className="inline-block px-3 py-1 bg-gray-100 text-gray-700 text-sm font-medium rounded-full capitalize mb-4">
                   {product.category}
                 </span>
-              </div>
-              
-              {/* Product Title and Price */}
-              <div>
                 <h1 className="text-4xl font-bold text-gray-900 mb-4">
                   {product.title}
                 </h1>
-                <div className="flex items-center space-x-4 mb-4">
-                  <span className="text-3xl font-bold text-gray-900">
+                <p className="text-3xl font-bold text-gray-900 mb-6">
                   ₹{product.price}
-                  </span>
-                  <div className="flex items-center space-x-1">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} size={16} className="text-yellow-400 fill-current" />
-                    ))}
-                    <span className="text-sm text-gray-600 ml-2">(4.8) 124 reviews</span>
-                  </div>
-                </div>
+                </p>
               </div>
 
-              {/* Description */}
-              <div>
+              <div className="mb-8">
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">Description</h3>
                 <p className="text-gray-700 leading-relaxed">
                   {product.description}
                 </p>
               </div>
 
-              {/* Stock Status */}
-              <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                <span className="text-green-600 font-medium">In Stock</span>
-                <span className="text-gray-500">• Fast Delivery Available</span>
-              </div>
-
               {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex flex-col sm:flex-row gap-4 mb-8">
                 <button
                   onClick={buyNow}
                   disabled={processing}
-                  className="flex-1 flex items-center justify-center space-x-2 px-8 py-4 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+                  className="flex-1 flex items-center justify-center space-x-2 px-8 py-3 bg-black text-white font-medium rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50"
                 >
                   <ShoppingCart size={20} />
                   <span>{processing ? 'Processing...' : 'Buy Now'}</span>
@@ -303,7 +325,7 @@ const ProductDetail: React.FC = () => {
                 <button
                   onClick={addToCart}
                   disabled={addingToCart}
-                  className="flex-1 flex items-center justify-center space-x-2 px-8 py-4 border-2 border-blue-600 text-blue-600 font-semibold rounded-lg hover:bg-blue-600 hover:text-white transition-colors disabled:opacity-50"
+                  className="flex-1 flex items-center justify-center space-x-2 px-8 py-3 border-2 border-black text-black font-medium rounded-lg hover:bg-black hover:text-white transition-colors disabled:opacity-50"
                 >
                   <ShoppingCart size={20} />
                   <span>{addingToCart ? 'Adding...' : 'Add to Cart'}</span>
@@ -311,7 +333,7 @@ const ProductDetail: React.FC = () => {
               </div>
 
               {/* Product Features */}
-              <div className="pt-6 border-t border-gray-200">
+              <div className="mt-8 pt-8 border-t border-gray-200">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Features</h3>
                 <ul className="space-y-2 text-gray-700">
                   <li className="flex items-center">
@@ -332,17 +354,6 @@ const ProductDetail: React.FC = () => {
                   </li>
                 </ul>
               </div>
-              
-              {/* Shipping Info */}
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h4 className="font-semibold text-gray-900 mb-2">Shipping Information</h4>
-                <ul className="text-sm text-gray-600 space-y-1">
-                  <li>• Free delivery on orders above ₹500</li>
-                  <li>• Standard delivery: 3-5 business days</li>
-                  <li>• Express delivery: 1-2 business days</li>
-                  <li>• Easy returns within 30 days</li>
-                </ul>
-              </div>
             </div>
           </div>
         </div>
@@ -350,7 +361,7 @@ const ProductDetail: React.FC = () => {
 
       {/* You May Also Like Section */}
       {relatedProducts.length > 0 && (
-        <section className="py-16 bg-white">
+        <section className="py-16 bg-gray-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">You May Also Like</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -360,7 +371,7 @@ const ProductDetail: React.FC = () => {
                     <img
                       src={relatedProduct.image_url}
                       alt={relatedProduct.title}
-                      className="w-full h-48 object-cover object-center group-hover:scale-105 transition-transform duration-300"
+                      className="w-full h-48 object-cover object-center hover:scale-105 transition-transform duration-300"
                     />
                     <div className="p-4">
                       <h3 className="font-medium text-gray-900 mb-2 line-clamp-2">
@@ -369,9 +380,6 @@ const ProductDetail: React.FC = () => {
                       <p className="text-xl font-bold text-gray-900">
                         ₹{relatedProduct.price}
                       </p>
-                      <button className="mt-2 w-full py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded hover:bg-gray-200 transition-colors">
-                        Quick View
-                      </button>
                     </div>
                   </Link>
                 </div>
